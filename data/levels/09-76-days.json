@@ -1,0 +1,1159 @@
+{
+  "id": "09-76-days",
+  "level": 9,
+  "title": "76 Days",
+  "tier": "advanced",
+  "lighting": "night",
+  "options": 4,
+  "real": {
+    "dates": "March–September 2017"
+  },
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": {
+    "clock": "23:10",
+    "node": "traffic"
+  },
+  "alarmAt": "23:04",
+  "introChoice": null,
+  "briefing": "Late July, near midnight, in New York. Sterling Credit, a credit bureau holding financial data on most adults in the country, has finally renewed a certificate on its traffic-inspection appliance. It had been expired for ten months. For the first time since last autumn, the appliance can see inside encrypted traffic, and it doesn't like what it sees.",
+  "attacker": {
+    "activeWhile": {
+      "not": {
+        "flag": "cut"
+      }
+    },
+    "events": [
+      {
+        "at": 40,
+        "flag": "moreRecords",
+        "meters": {
+          "C": -10
+        },
+        "text": "While the sessions stay open, the appliance logs more queries leaving the dispute portal: small batches, spaced out, exactly the pattern that hid them for months."
+      },
+      {
+        "at": 600,
+        "flag": "massRecords",
+        "meters": {
+          "C": -20,
+          "R": -10
+        },
+        "penalty": 10,
+        "text": "Days of \"observing\" gave the intruder days of access. Thousands more queries ran against the databases before anyone closed the door."
+      },
+      {
+        "onEnter": "disclose",
+        "if": {
+          "not": {
+            "all": [
+              {
+                "flag": "clueOwner"
+              },
+              {
+                "flag": "clueScan"
+              }
+            ]
+          }
+        },
+        "flag": "scopeRevised",
+        "meters": {
+          "R": -10
+        },
+        "penalty": 5,
+        "because": [
+          "The March flashbacks left questions unanswered"
+        ],
+        "text": "Without the full story from March, the scope is a guess. Whatever number you announce, you will have to revise it upward later, in public."
+      }
+    ]
+  },
+  "nodes": {
+    "traffic": {
+      "phase": "Detection & Analysis",
+      "title": "The certificate",
+      "body": "{clock}, July 29. With the new certificate in place, the appliance decrypts outbound traffic again and immediately flags it: the server behind the online dispute portal sends encrypted sessions to the same outside address every night. The pattern looks old. Very old.",
+      "logs": [
+        {
+          "text": "Jul 29 Inspection appliance · Certificate renewed after 10 months expired · inspection resumed",
+          "type": "info"
+        },
+        {
+          "text": "Jul 29 Inspection appliance · Encrypted outbound sessions from dispute-portal server to 203.0.113.140 · repeated nightly",
+          "type": "hi"
+        }
+      ],
+      "notes": {
+        "iris": "Quiet, nightly, patient. That's not a smash-and-grab; that's someone who planned to stay. Assume they've been here since before the certificate expired.",
+        "echo": "Echo's extra clue: the session sizes are tiny and regular. Someone deliberately kept every transfer small enough to blend in.",
+        "moritz": "Ten months of blind inspection is the real finding. Expired certificates are an asset-management failure, not bad luck.",
+        "jayson": "If I'd been inside for months, I'd notice the moment you could see me. Tonight is when I'd grab what's left."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Image the portal server, then block the sessions and take the dispute portal offline",
+          "short": "Imaged, blocked, portal offline",
+          "effects": {
+            "minutes": 30,
+            "evidence": 30,
+            "meters": {
+              "A": -10
+            },
+            "set": {
+              "cut": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "MITRE ATT&CK T1190 · Exploit Public-Facing Application"
+          ],
+          "note": "By 23:40 the portal shows a maintenance page and the nightly sessions stop. The server image keeps everything the intruder left on it.",
+          "why": "Once active exfiltration is confirmed, stop it, after capturing the evidence you need to scope it. Watching an active data theft from a database of millions is not an acceptable trade.",
+          "whyDeep": "NIST SP 800-61 lets teams delay containment to gather intelligence, but only when the risk is understood and accepted. Here the data at risk is sensitive personal and financial data at enormous scale; the risk of waiting is the incident itself."
+        },
+        {
+          "key": "B",
+          "label": "Keep observing for a few days to understand the full scope first",
+          "short": "Observed for days",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "observed": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "You set up extra logging and let it run. The intruder keeps working while you take notes.",
+          "why": "Observation can help in some cases, but not when sensitive data is leaving every night. Scope can be reconstructed from logs and images after containment."
+        },
+        {
+          "key": "C",
+          "label": "Block only the outside address",
+          "short": "Blocked one address",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "ipBlocked": true
+            },
+            "points": 4
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "The sessions to 203.0.113.140 stop. The next night, similar sessions go to a different address.",
+          "why": "Blocking one destination is easy to route around. The entry point, the vulnerable portal, is still open."
+        },
+        {
+          "key": "D",
+          "label": "Restart the portal server and see if the traffic stops",
+          "short": "Restarted the server",
+          "effects": {
+            "minutes": 15,
+            "evidence": -10,
+            "points": 1
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "The restart wipes the server's memory, and with it some of what you needed. The traffic comes back an hour later.",
+          "why": "Restarting destroys volatile evidence and doesn't remove the way in. It's not containment."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Someone who stayed this long will notice you can see them. Close the door tonight.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Image the server first. Then cut it off.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Contain, then scope. The logs and images will tell you the rest without the intruder still inside.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Watching me steal doesn't make me steal less. Pull the portal.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "flash1"
+        }
+      ]
+    },
+    "flash1": {
+      "act": "Flashback · March 9",
+      "phase": "Lessons from the past",
+      "title": "The email",
+      "body": "The intruder came in through the dispute portal. You pull the March records and replay them as if you were there. March 9: a critical flaw in the web framework that runs the portal has just been announced, with a patch. The security team forwards the notice to its usual distribution list. In this replay, what do you check?",
+      "logs": [
+        {
+          "text": "Mar 09 Email · Patch notice for web framework vulnerability sent to distribution list · intended owner not on list",
+          "type": "warn"
+        }
+      ],
+      "notes": {
+        "iris": "A patch notice is only as good as the list it goes to. Follow the email to whoever actually owns the box.",
+        "echo": "The framework version is in the portal's own headers. You can see exactly which servers ran it.",
+        "moritz": "An asset inventory with owners is what turns a patch notice into a patch. Check whether the portal had an owner on record.",
+        "jayson": "If I'd read the same advisory, I'd scan the internet for that framework the same day. They had hours, not weeks."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Who owns the dispute portal, and was that person on the list?",
+          "short": "Traced the portal's owner",
+          "effects": {
+            "minutes": 20,
+            "evidence": 20,
+            "set": {
+              "clueOwner": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "CIS Controls v8 · 1 Inventory of Enterprise Assets",
+            "CIS Controls v8 · 7 Vulnerability Management"
+          ],
+          "note": "The asset inventory lists the portal, but its owner left the list months ago. The notice never reached anyone who could patch it. Today that tells you the entry point and when the window opened: early March.",
+          "why": "Vulnerability management depends on knowing every asset and who owns it. A notice to the wrong people is no notice at all. Knowing when the door opened sets the start of your scope.",
+          "whyDeep": "CIS Controls v8 starts with Control 1 (inventory of enterprise assets) and Control 7 (continuous vulnerability management) for this reason: you cannot patch what you don't know you have, or don't know who owns."
+        },
+        {
+          "key": "B",
+          "label": "Whether the email went out on time",
+          "short": "Checked the email's timing",
+          "effects": {
+            "minutes": 10,
+            "points": 3
+          },
+          "tags": [
+            "CIS Controls v8 · 7 Vulnerability Management"
+          ],
+          "note": "It did, within hours. That answers nothing about why the portal stayed unpatched.",
+          "why": "Timeliness matters, but the failure wasn't speed. It was the recipients."
+        },
+        {
+          "key": "C",
+          "label": "Whether the vendor's patch actually worked",
+          "short": "Checked the patch quality",
+          "effects": {
+            "minutes": 15,
+            "points": 2
+          },
+          "tags": [
+            "CIS Controls v8 · 7 Vulnerability Management"
+          ],
+          "note": "The patch was fine. It just never got installed.",
+          "why": "A good patch helps only if someone installs it. The question is why nobody did."
+        },
+        {
+          "key": "D",
+          "label": "Find out who to blame for the email",
+          "short": "Looked for someone to blame",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "blameHunt": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "Blameless post-incident review"
+          ],
+          "note": "You find a name. It doesn't tell you anything about the portal or the scope.",
+          "why": "Blame answers \"who\", not \"why\". The process failed: an outdated list and no owner on record."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Follow the email to the person who should have read it.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Check which servers ran the framework. One of them is your door.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Asset owner, distribution list, patch. Find which link was missing.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Attackers read advisories too. The race started on March 9.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "flash2"
+        }
+      ]
+    },
+    "flash2": {
+      "act": "Flashback · March 15",
+      "phase": "Lessons from the past",
+      "title": "The scan",
+      "body": "March 15: a week after the notice, the security team runs a vulnerability scan to find anything still affected. The scan comes back clean. The portal was vulnerable the whole time. In this replay, what do you check?",
+      "logs": [
+        {
+          "text": "Mar 15 Scanner · Scan did not find the vulnerable component (scan scope incomplete)",
+          "type": "warn"
+        }
+      ],
+      "notes": {
+        "iris": "A clean scan is a statement about what the scanner looked at, nothing more.",
+        "echo": "Compare the scan's target list with the full asset inventory. The gaps are where this story lives.",
+        "moritz": "If the scope was incomplete for the portal, it was incomplete for other systems too. That's where today's scope grows.",
+        "jayson": "A clean report is my favourite kind of report. Nobody looks twice."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Compare the scan's scope with the full asset list to see what it never covered",
+          "short": "Found the scanner's blind spots",
+          "effects": {
+            "minutes": 20,
+            "evidence": 20,
+            "set": {
+              "clueScan": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "CIS Controls v8 · 7 Vulnerability Management",
+            "NIST SP 800-61 · Detection & Analysis"
+          ],
+          "note": "The scanner never covered the portal's directory, or a file share full of configuration files next to it. Today that tells you where to look next: what's in that share.",
+          "why": "A scan only proves what it scanned. Finding its blind spots in March tells you where else the intruder could have gone unseen, which is exactly how you scope today."
+        },
+        {
+          "key": "B",
+          "label": "Run the same scan again today",
+          "short": "Re-ran the same scan",
+          "effects": {
+            "minutes": 20,
+            "points": 2
+          },
+          "tags": [
+            "CIS Controls v8 · 7 Vulnerability Management"
+          ],
+          "note": "Clean again, with the same blind spots.",
+          "why": "Repeating a scan with the same scope repeats its gaps."
+        },
+        {
+          "key": "C",
+          "label": "Trust the March report: it said clean",
+          "short": "Trusted the clean report",
+          "effects": {
+            "minutes": 5,
+            "points": 0
+          },
+          "tags": [
+            "CIS Controls v8 · 7 Vulnerability Management"
+          ],
+          "note": "The report said clean. The intruder agreed.",
+          "why": "A clean result from an incomplete scan is false comfort."
+        },
+        {
+          "key": "D",
+          "label": "Decide to replace the scanner with another vendor's",
+          "short": "Planned a new scanner",
+          "effects": {
+            "minutes": 10,
+            "points": 3
+          },
+          "tags": [
+            "CIS Controls v8 · 7 Vulnerability Management"
+          ],
+          "note": "A procurement ticket is opened. A new scanner with the same incomplete target list will miss the same things.",
+          "why": "The tool wasn't the problem; its scope was. Fix what it's pointed at."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Find out what the scanner never looked at. That's the map of everything you still don't know.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Target list against inventory. Read the differences.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Scope gaps don't stay in one place. Follow them into today's investigation.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Re-running a scan I already beat doesn't worry me.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "scope"
+        }
+      ]
+    },
+    "scope": {
+      "act": "Back to the present",
+      "phase": "Eradication",
+      "title": "48 databases",
+      "body": [
+        {
+          "if": {
+            "flag": "clueScan"
+          },
+          "text": "{clock}. Back in the present, you go straight to the file share the March scan never covered. It holds configuration files with database usernames and passwords in plain text. The logs show they were used."
+        },
+        {
+          "text": "{clock}. Back in the present, the forensic team finds something on a file share next to the portal: configuration files with database usernames and passwords in plain text. The logs show they were used."
+        }
+      ],
+      "logs": [
+        {
+          "text": "Jul 30 Analyst · Credentials stored in plain text in a config share were used to reach 48 databases",
+          "type": "hi"
+        }
+      ],
+      "notes": {
+        "iris": "From one portal to 48 databases, with passwords someone left lying around. The intruder didn't break those doors; they used the keys.",
+        "echo": "Every database has query logs. They'll tell you which records were read, not just which databases were touched.",
+        "moritz": "Plain-text credentials are why one entry point became 48. Fix the secret storage, not just the passwords.",
+        "jayson": "If I had those passwords, I'd have copied them somewhere safe. Changing a few won't lock me out."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Rotate every credential in that share, move secrets into a vault, and scope all 48 databases from their query logs",
+          "short": "Rotated all, scoped all 48",
+          "effects": {
+            "minutes": 120,
+            "evidence": 30,
+            "set": {
+              "credsRotated": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication",
+            "MITRE ATT&CK T1552.001 · Credentials In Files"
+          ],
+          "note": "Every exposed password is changed and stored properly. The query logs show roughly which records were read, database by database. It takes all night, and it is the number you'll stand behind.",
+          "why": "Eradication removes the attacker's means of access: every credential they could have copied. Scoping from query logs tells you whose data was actually exposed, which is what disclosure needs.",
+          "whyDeep": "MITRE ATT&CK T1552.001 (Unsecured Credentials: Credentials In Files) describes attackers searching files for stored passwords. Defences are secret management, not storing credentials in plain text, and monitoring access to configuration stores."
+        },
+        {
+          "key": "B",
+          "label": "Reset only the portal's admin password",
+          "short": "Reset one password",
+          "effects": {
+            "minutes": 10,
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication"
+          ],
+          "note": "One password changes. Forty-seven database credentials in the share stay exactly as the intruder found them.",
+          "why": "Every credential in the share must be treated as stolen. Resetting one leaves the rest usable."
+        },
+        {
+          "key": "C",
+          "label": "Scope only the portal's own database",
+          "short": "Scoped only the portal",
+          "effects": {
+            "minutes": 40,
+            "set": {
+              "narrowScope": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication"
+          ],
+          "note": "The portal's database is analysed carefully. The other 48 aren't analysed at all.",
+          "why": "The credentials led to 48 more databases. A scope that ignores them will be wrong, and the public number based on it will be too."
+        },
+        {
+          "key": "D",
+          "label": "Shut down all 48 databases until further notice",
+          "short": "Shut down all databases",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "A": -30
+            },
+            "points": 4
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "Credit checks stop nationwide. Banks and landlords start calling. The passwords are still in the share.",
+          "why": "Shutting everything down is containment by sledgehammer, and it fixes nothing: the exposed credentials remain valid once the databases come back."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Assume every password in that share is in the intruder's notebook.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Query logs, database by database. That's your scope.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Rotate everything, store secrets properly, and only then believe your numbers.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Change all of them. I only need one you forgot.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "disclose"
+        }
+      ]
+    },
+    "disclose": {
+      "clockAt": "10:00",
+      "days": 2,
+      "phase": "Post-Incident Activity",
+      "title": "When to tell the public",
+      "body": "July 31, {clock}. The scope is taking shape: personal data, including identity numbers, of a very large share of the adult population. The board asks when Sterling Credit should go public.",
+      "notes": {
+        "iris": "Every week of silence is a week in which those identity numbers can be used, and a week the press will count later.",
+        "echo": "The data is already out. Telling people is the only part of this you still control.",
+        "moritz": "Notification laws differ by state, but none of them reward waiting until it's comfortable.",
+        "jayson": "If I had those records, I'd start using them before the news broke. Every day of silence helps me."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "As soon as the core scope is confirmed: notify regulators and the public within days, and update as you learn more",
+          "short": "Disclosed within days",
+          "effects": {
+            "minutes": 60,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "promptDisclosure": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "US state breach notification laws",
+            "NIST SP 800-61 · Post-Incident Activity"
+          ],
+          "note": "The announcement goes out within the week, with clear advice: freeze your credit, watch your accounts, here is what we know and what we don't yet.",
+          "why": "People can only protect themselves once they know. Prompt disclosure with honest uncertainty beats a perfect report weeks later; most breach laws require notice without unreasonable delay."
+        },
+        {
+          "key": "B",
+          "label": "Wait until the outside forensic firm finishes, in about six weeks",
+          "short": "Waited six weeks",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -15
+            },
+            "set": {
+              "slow": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "US state breach notification laws"
+          ],
+          "note": "Six weeks of preparation. When the announcement comes, the first question is why it took so long.",
+          "why": "Thoroughness matters, but waiting for certainty leaves people unprotected. Disclose what you know, then update."
+        },
+        {
+          "key": "C",
+          "label": "Notify only in the states where the law strictly requires it",
+          "short": "Minimum legal notice",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "R": -15
+            },
+            "points": 2
+          },
+          "tags": [
+            "US state breach notification laws"
+          ],
+          "note": "Some customers get letters; their neighbours, with the same data stolen, read about it in the news.",
+          "why": "Doing the legal minimum, state by state, treats identical victims differently and looks like hiding."
+        },
+        {
+          "key": "D",
+          "label": "Don't disclose: nobody outside the company knows yet",
+          "short": "Didn't disclose",
+          "effects": {
+            "minutes": 5,
+            "meters": {
+              "R": -30
+            },
+            "set": {
+              "hidden": true
+            },
+            "points": -25
+          },
+          "tags": [
+            "US state breach notification laws"
+          ],
+          "note": "For a few weeks, nothing happens. Then a journalist calls with a copy of the data.",
+          "why": "Concealing a breach of this size breaks notification laws and leaves millions unable to protect themselves. When it comes out, the concealment becomes the story."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Announce what you know now. The uncertainty is not a reason to wait.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "They're already using the data. Let people defend themselves.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Notify without unreasonable delay, then keep updating. That's what the laws ask.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Every day you wait is a day I get for free.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "site"
+        }
+      ]
+    },
+    "site": {
+      "phase": "Post-Incident Activity",
+      "title": "Where people check",
+      "body": "{clock}. Millions of people will want to check whether they're affected. Marketing proposes a brand-new website with a catchy name, separate from Sterling Credit's own domain. Where should it live?",
+      "notes": {
+        "iris": "Fraudsters will copy whatever you build within hours. Make the real one easy to recognise.",
+        "echo": "A new domain looks exactly like a phishing domain. People can't tell the difference, and neither can their filters.",
+        "moritz": "Put it on the domain people already trust, and link it from the homepage. Boring is safe.",
+        "jayson": "If you launch a new domain, I'll register three that look just like it by lunchtime."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "On the company's own domain, linked from the homepage, with a phone line for people offline",
+          "short": "Own domain, linked from homepage",
+          "effects": {
+            "minutes": 30,
+            "set": {
+              "ownDomain": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "Anti-phishing",
+            "Crisis communication"
+          ],
+          "note": "sterlingcredit[.]example/check goes live, linked from the homepage and every official message. When look-alike sites appear, people know where the real one is.",
+          "why": "During a breach, criminals send fake \"check if you're affected\" emails. A page on your established domain is easy to verify; a brand-new domain is indistinguishable from phishing."
+        },
+        {
+          "key": "B",
+          "label": "A new, catchy domain built for the campaign",
+          "short": "New campaign domain",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "lookalike": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "Anti-phishing"
+          ],
+          "note": "sterlingsecure2017[.]example launches. Within a day, a researcher builds an almost identical fake to prove a point, and Sterling Credit's own social media team links to the fake by mistake.",
+          "why": "A new domain trains people to trust unfamiliar addresses at exactly the moment criminals are sending fake ones."
+        },
+        {
+          "key": "C",
+          "label": "Only a phone hotline",
+          "short": "Phone line only",
+          "effects": {
+            "minutes": 15,
+            "meters": {
+              "A": -10
+            },
+            "points": 4
+          },
+          "tags": [
+            "Crisis communication"
+          ],
+          "note": "The hotline is overwhelmed within an hour. Hold times reach four hours.",
+          "why": "A phone line helps people without internet access, but on its own it can't handle millions of callers."
+        },
+        {
+          "key": "D",
+          "label": "Put the checker behind sign-up terms that waive customers' right to sue",
+          "short": "Checker with a lawsuit waiver",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "R": -20
+            },
+            "set": {
+              "waiver": true
+            },
+            "points": -5
+          },
+          "tags": [
+            "Crisis communication",
+            "Consumer protection"
+          ],
+          "note": "Within hours, the fine print is on the news. Regulators ask questions. The terms are withdrawn by the weekend.",
+          "why": "Making victims give up rights to find out whether they're victims turns a breach into a scandal. Help first, legal strategy separately."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "iris"
+          },
+          "label": "Use the checker page to sell Sterling Credit's paid identity-monitoring product",
+          "short": "Upsold monitoring on the checker",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "R": -15
+            },
+            "set": {
+              "upsell": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "Crisis communication",
+            "Consumer protection"
+          ],
+          "note": "Sales of the monitoring product climb. So does the anger.",
+          "why": "Iris's shortcut: monetise the crisis. Offering free monitoring is responsible; selling it to the people you exposed is not."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Make the real site impossible to confuse with a fake.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Same domain, same brand, linked everywhere. Anything new looks like phishing.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Use the domain people already trust. Then tell them it's the only one.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "New domain? I'm registering the look-alikes right now.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "shares"
+        }
+      ]
+    },
+    "shares": {
+      "phase": "Post-Incident Activity",
+      "title": "The executive",
+      "body": "{clock}. A senior executive, one of the few who knows about the breach, stops by your desk. Casually: \"I'm thinking of selling some shares this week, before things get noisy. That's fine, right?\"",
+      "notes": {
+        "iris": "I've seen careers end over less. This conversation is evidence already.",
+        "echo": "The people who know are a short, documented list. So are their trades.",
+        "moritz": "This isn't a security question; it's a legal one. Escalate it, in writing.",
+        "jayson": "Selling before the news is the oldest trick in the market. It's also a crime."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Say no, escalate to the General Counsel, and ask for a trading blackout for everyone who knows",
+          "short": "Escalated; trading blackout",
+          "effects": {
+            "minutes": 20,
+            "set": {
+              "blackout": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "Securities law · Insider trading",
+            "Corporate governance"
+          ],
+          "note": "General Counsel puts everyone with knowledge of the breach under a trading blackout the same afternoon. The executive grumbles and complies.",
+          "why": "Trading on material non-public information, such as an undisclosed breach, is insider trading. Security teams handling such information should escalate to Legal and support a blackout."
+        },
+        {
+          "key": "B",
+          "label": "Say it's fine: it's their money",
+          "short": "Said it was fine",
+          "effects": {
+            "minutes": 5,
+            "meters": {
+              "R": -25
+            },
+            "set": {
+              "insiderSale": true
+            },
+            "points": -25
+          },
+          "tags": [
+            "Securities law · Insider trading"
+          ],
+          "note": "The shares are sold. When the breach is announced and the price falls, regulators start with the trades made in the days before.",
+          "why": "Selling shares while knowing about an unannounced breach is insider trading, and you just approved it. In the real case behind this level, an executive who did this went to prison."
+        },
+        {
+          "key": "C",
+          "label": "Say nothing: it's not your department",
+          "short": "Stayed out of it",
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "lookedAway": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "Securities law · Insider trading"
+          ],
+          "note": "The executive sells. You knew, and you said nothing.",
+          "why": "Knowing about likely insider trading and staying silent isn't neutral. Escalating to Legal protects the company, the investors and you."
+        },
+        {
+          "key": "D",
+          "label": "Tell him to ask the CFO",
+          "short": "Sent him to the CFO",
+          "effects": {
+            "minutes": 5,
+            "points": 3
+          },
+          "tags": [
+            "Corporate governance"
+          ],
+          "note": "The CFO is in back-to-back breach meetings. Nobody gets back to the executive for a week.",
+          "why": "Passing the question along isn't the same as stopping it. This needs Legal and a formal blackout."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "If they sell this week, they'll be explaining it to regulators for years.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "There's a list of who knows. Every name on it should be on a blackout.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Legal question, legal answer: escalate to General Counsel today.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "I'd call this one easy: it's a crime. Stop it.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "press"
+        }
+      ]
+    },
+    "press": {
+      "clockAt": "11:00",
+      "days": 5,
+      "newScene": true,
+      "phase": "Post-Incident Activity",
+      "title": "The press conference",
+      "body": "{clock}. The announcement is out. A room full of cameras, the CEO beside you, and you've been asked to answer the technical questions. The first one comes from the back: \"Was this preventable?\"",
+      "notes": {
+        "iris": "The truth is the only answer that won't get worse with time.",
+        "echo": "They'll find the March email anyway. Better from you.",
+        "moritz": "Say it simply. Then stop talking. I find the second part hard.",
+        "jayson": "Spin buys a day. The documents come out eventually; they always do."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "\"Yes. A known flaw stayed unpatched for months because a warning never reached the right people. Here's what we've changed.\"",
+          "short": "Owned it at the press conference",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "R": 5
+            },
+            "set": {
+              "ownedIt": true
+            },
+            "points": 10
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz answers with a correct and very long explanation; the clip that airs is the confusing middle. Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "Crisis communication",
+            "Blameless post-incident review"
+          ],
+          "note": "The room goes quiet. The headline the next day is harsh, but it's the last harsh one: there's nothing left to uncover.",
+          "why": "Honesty about root causes, with concrete fixes, is the only crisis message that survives later reporting. It also tells other organisations what to check."
+        },
+        {
+          "key": "B",
+          "label": "\"This was a highly sophisticated attack by advanced adversaries.\"",
+          "short": "Called it sophisticated",
+          "effects": {
+            "minutes": 15,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "spin": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "Crisis communication"
+          ],
+          "note": "Two weeks later, the story of the unpatched portal and the expired certificate comes out. The word \"sophisticated\" is quoted back in every article.",
+          "why": "Calling a preventable breach sophisticated shifts blame to the attacker. When the root cause comes out, credibility goes with it."
+        },
+        {
+          "key": "C",
+          "label": "\"No comment while the investigation is ongoing.\"",
+          "short": "No comment",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -5
+            },
+            "points": 3
+          },
+          "tags": [
+            "Crisis communication"
+          ],
+          "note": "The cameras get their silence. Speculation fills it.",
+          "why": "Some details must wait for the investigation, but the basic question deserves an answer. Silence lets others write the story."
+        },
+        {
+          "key": "D",
+          "label": "\"An individual employee failed to apply the patch.\"",
+          "short": "Blamed one employee",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -15
+            },
+            "set": {
+              "blamedOne": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "Blameless post-incident review"
+          ],
+          "note": "The room writes it down. The employee's name leaks by evening. The process failures, the list, the scan, the certificate, the plain-text passwords, go unmentioned.",
+          "why": "One person didn't cause this; a chain of process failures did. Blaming an individual in public is unfair and hides what actually needs fixing."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Say yes. Then say what changed. Nothing else holds up.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Everything from March is in the documents. Don't say anything they'll contradict.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Root cause, fixes, done. Short sentences.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Spin works until the first leak. There's always a first leak.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "end"
+        }
+      ]
+    }
+  },
+  "endings": [
+    {
+      "if": {
+        "flag": "insiderSale"
+      },
+      "grade": "Insider trading",
+      "tone": "bad",
+      "text": "Whatever else went right, an executive sold shares on secret breach knowledge with your approval. The investigation now has a criminal chapter."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "massRecords"
+          },
+          {
+            "any": [
+              {
+                "flag": "hidden"
+              },
+              {
+                "flag": "spin"
+              },
+              {
+                "flag": "blamedOne"
+              }
+            ]
+          }
+        ]
+      },
+      "grade": "Rooted",
+      "tone": "bad",
+      "text": "The intruder kept working while you watched, and the public got spin instead of the truth. The data of millions is gone, and so is the trust."
+    },
+    {
+      "if": {
+        "flag": "hidden"
+      },
+      "grade": "Cover-up",
+      "tone": "bad",
+      "text": "The breach was contained, then hidden. When the journalist's story ran, the concealment made it worse than the breach itself."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "cut"
+          },
+          {
+            "flag": "clueOwner"
+          },
+          {
+            "flag": "clueScan"
+          },
+          {
+            "flag": "credsRotated"
+          },
+          {
+            "flag": "promptDisclosure"
+          },
+          {
+            "flag": "ownDomain"
+          },
+          {
+            "flag": "blackout"
+          },
+          {
+            "flag": "ownedIt"
+          }
+        ]
+      },
+      "grade": "76 days, owned",
+      "tone": "good",
+      "text": "You closed the door the night you saw it, learned from March how it opened, scoped it honestly, told people quickly and stood in front of the cameras with the truth. The breach was bad. The response wasn't."
+    },
+    {
+      "if": {
+        "any": [
+          {
+            "flag": "spin"
+          },
+          {
+            "flag": "blamedOne"
+          },
+          {
+            "flag": "lookalike"
+          },
+          {
+            "flag": "waiver"
+          },
+          {
+            "flag": "upsell"
+          },
+          {
+            "flag": "lookedAway"
+          }
+        ]
+      },
+      "grade": "Crisis mishandled",
+      "tone": "mixed",
+      "text": "The technical response held, but the crisis didn't: a look-alike site, fine print, spin, or a scapegoat. People remember how a company behaves after a breach."
+    },
+    {
+      "grade": "Contained with damage",
+      "tone": "mixed",
+      "text": "The intruder is out and the public was told, but the scope grew in public or the response took longer than it should have."
+    }
+  ],
+  "lessons": [
+    "You can't patch what you don't know you have: keep an asset inventory with owners, and send warnings to them.",
+    "A clean scan only proves what it scanned. Check the scan's scope.",
+    "Expired certificates on security tools mean blind spots. Monitor them like any other critical asset.",
+    "Plain-text credentials turn one entry point into dozens. Store secrets properly.",
+    "Disclose quickly on your own trusted domain; new domains look exactly like phishing.",
+    "Insider knowledge of a breach is material information: no trading, and escalate to Legal.",
+    "At the press conference, own the root cause. Spin and scapegoats don't survive the documents."
+  ],
+  "standards": [
+    "NIST SP 800-61 (Computer Security Incident Handling Guide)",
+    "CIS Controls v8: Control 1 (Inventory of Enterprise Assets), Control 7 (Continuous Vulnerability Management)",
+    "US state data breach notification laws",
+    "US securities law on insider trading",
+    "MITRE ATT&CK: T1190 Exploit Public-Facing Application, T1552.001 Credentials In Files"
+  ],
+  "whatActuallyHappened": {
+    "title": "What actually happened…",
+    "paragraphs": [
+      "In March 2017, a critical flaw in Apache Struts, a widely used web application framework, was made public along with a fix (CVE-2017-5638). The US Computer Emergency Readiness Team warned about it on March 8. At Equifax, one of the three big US credit bureaus, the alert was forwarded internally, but according to the US Government Accountability Office (GAO), the distribution list was out of date: the people responsible for the online dispute portal, which ran Struts, never received it. A scan about a week later did not detect the vulnerable portal.",
+      "Attackers found the vulnerable portal around March 10. From May 13, 2017, they used it to get into Equifax's systems. They found a file with unencrypted usernames and passwords and used them to reach 48 databases beyond the portal's own three, running about 9,000 queries in small batches to avoid notice.",
+      "Equifax had a device that inspected encrypted traffic, but the GAO reports that a digital certificate on it had expired about ten months earlier, so that traffic went uninspected. When the certificate was renewed, on July 29, 2017, the security team saw the suspicious traffic at once. The portal was taken offline on July 30.",
+      "Equifax announced the breach on September 7, 2017. The first estimate was 143 million US consumers; it was raised to 145.5 million in October and later to about 147.9 million. Names, Social Security numbers, birth dates, addresses and, for some people, driver's license and credit card numbers were exposed.",
+      "The response caused its own problems. Equifax put its breach-check site on a new domain, equifaxsecurity2017.com, which security experts said looked like a phishing site; a software engineer built a look-alike to prove the point, and Equifax's own social media account linked to it by mistake several times. Three executives sold shares days after the breach was discovered, before it was announced (Equifax said they did not know about it at the time). Another executive, Jun Ying, sold shares after concluding there had been a breach; he was convicted of insider trading and sentenced in 2019 to four months in prison.",
+      "CEO Richard Smith retired on September 26, 2017. In July 2019, Equifax agreed to a settlement of at least $575 million with the US Federal Trade Commission, the Consumer Financial Protection Bureau and the states. In February 2020, the US Department of Justice indicted four members of China's military in connection with the hack; China denied involvement.",
+      "Sterling Credit and everything you decided in this level are fictional. The chain is real: one email to the wrong list, one scan with the wrong scope, one expired certificate, one file of plain-text passwords."
+    ],
+    "sources": [
+      {
+        "label": "US GAO: Data Protection: Actions Taken by Equifax and Federal Agencies in Response to the 2017 Breach (GAO-18-559, August 2018)",
+        "url": "https://www.gao.gov/assets/700/694347.pdf"
+      },
+      {
+        "label": "US House Committee on Oversight and Government Reform: The Equifax Data Breach (staff report, December 2018)",
+        "url": "https://oversight.house.gov/wp-content/uploads/2018/12/Equifax-Report.pdf"
+      },
+      {
+        "label": "GovInfoSecurity: Ex-Equifax CIO gets 4-month prison term for insider trading (2019)",
+        "url": "https://www.govinfosecurity.com/ex-equifax-cio-gets-4-month-prison-term-for-insider-trading-a-12704"
+      },
+      {
+        "label": "Wikipedia: 2017 Equifax data breach (summary with links to news coverage of the breach site, settlement and indictment)",
+        "url": "https://en.wikipedia.org/wiki/2017_Equifax_data_breach"
+      }
+    ]
+  }
+}

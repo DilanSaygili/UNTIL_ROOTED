@@ -1,0 +1,1154 @@
+{
+  "id": "11-last-copy",
+  "level": 11,
+  "title": "The Last Copy",
+  "tier": "master",
+  "lighting": "dusk",
+  "options": 4,
+  "real": {
+    "dates": "27 June 2017"
+  },
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": {
+    "clock": "09:47",
+    "node": "ransom"
+  },
+  "alarmAt": "09:46",
+  "introChoice": null,
+  "briefing": "Varga Maritime moves a large share of the world's containers: ships, ports, trucks and the systems that tell every crane what to lift. You're on the incident team in the operations centre under its headquarters. At 09:41 a routine update for the accounting software used by its branch offices went out. Five minutes later the first screens turned red.",
+  "attacker": {
+    "activeWhile": {
+      "not": {
+        "any": [
+          {
+            "flag": "netCut"
+          },
+          {
+            "flag": "isolated"
+          }
+        ]
+      }
+    },
+    "events": [
+      {
+        "at": 15,
+        "flag": "dataCentres",
+        "meters": {
+          "A": -20,
+          "I": -10
+        },
+        "penalty": 5,
+        "text": "The worm reaches both data centres. Backup servers that were still connected to the network are wiped along with everything else."
+      },
+      {
+        "at": 30,
+        "flag": "partners",
+        "meters": {
+          "R": -15,
+          "A": -10
+        },
+        "penalty": 15,
+        "text": "Through the always-on links to partner terminals and customs brokers, the worm leaves Varga's network and starts wiping other companies' machines too."
+      },
+      {
+        "onEnter": "manual",
+        "if": {
+          "flag": "copyOnline"
+        },
+        "flag": "lastCopyLost",
+        "meters": {
+          "A": -20,
+          "I": -15
+        },
+        "penalty": 20,
+        "review": "TODO: author review",
+        "log": "ACC-LGS-01 | Disk boot records being overwritten · ransom screen shown",
+        "because": [
+          "ACC-LGS-01 was powered on while connected to an office network with infected machines"
+        ],
+        "text": "Infected machines in the West Africa office are still switched on and scanning. Seconds after ACC-LGS-01 joins the network, its disk is overwritten too. The last clean copy of the identity directory is gone."
+      },
+      {
+        "onEnter": "recovery",
+        "if": {
+          "flag": "laptopsPlugged"
+        },
+        "flag": "reinfection",
+        "meters": {
+          "A": -15
+        },
+        "penalty": 10,
+        "because": [
+          "Spare laptops were connected before the network was cleaned"
+        ],
+        "text": "Two of the spare laptops pick up the worm from a machine nobody had switched off yet. Recovery stops for half a day while the new network is checked again."
+      }
+    ]
+  },
+  "nodes": {
+    "ransom": {
+      "phase": "Detection & Analysis",
+      "title": "Red screens",
+      "body": "{clock}. Across the floor, screens go red one after another, then the machines reboot into a ransom note: your files are encrypted; pay $300 in cryptocurrency per machine for the key. The counter of hit machines is climbing as you read this. The finance director is already asking how fast you can pay.",
+      "logs": [
+        {
+          "text": "09:41 | Update server | Accounting software update pushed to all branches [package quarantined]",
+          "type": "warn"
+        },
+        {
+          "text": "09:44 | Network | Rapid machine-to-machine connections across subnets · spreading behaviour",
+          "type": "hi"
+        },
+        {
+          "text": "09:45 | EDR | Credential-theft behaviour detected [tool name redacted]",
+          "type": "hi"
+        },
+        {
+          "text": "09:46 | EDR | Disk boot records being overwritten · ransom screen shown",
+          "type": "hi"
+        }
+      ],
+      "spread": {
+        "label": "Machines showing the ransom screen:",
+        "start": 1200,
+        "total": 38000,
+        "perSecond": 45,
+        "slowAfter": 45,
+        "slowEvent": {
+          "flag": "hesitatedRansom",
+          "meters": {
+            "A": -10
+          },
+          "penalty": 5,
+          "text": "While the ransom note held everyone's attention, the worm reached two more container terminals. Their gate systems stop mid-shift."
+        }
+      },
+      "notes": {
+        "iris": "Ransom is a business deal. Deals need someone who can deliver on the other side. Who's delivering here?",
+        "echo": "Echo's extra clue: the \"installation key\" on the ransom screen is different on every machine and looks random. There may be nothing it could ever unlock.",
+        "moritz": "Before any payment: legal checks, sanctions, and the question of whether payment restores anything at all.",
+        "jayson": "If I wanted money, I'd make paying easy. This note has one email address for thousands of victims. That's not a business."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Pay the ransom for the 120 most important servers, to get the business running",
+          "short": "Paid the ransom",
+          "effects": {
+            "minutes": 10,
+            "money": 36000,
+            "set": {
+              "paid": true
+            },
+            "points": -10
+          },
+          "tags": [
+            "MITRE ATT&CK T1485 · Data Destruction",
+            "Ransom payment"
+          ],
+          "note": "The payments go through. No keys arrive. The servers stay red.",
+          "why": "This is not ransomware: it's a wiper dressed up as ransomware. The data is being destroyed, and no key can bring it back. Payment also funds the attacker and can break sanctions law. Paying should never be the first move, and here it buys nothing."
+        },
+        {
+          "key": "B",
+          "label": "Negotiate through the email address on the note, to buy time and learn more",
+          "short": "Tried to negotiate",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "negotiated": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "Ransom payment"
+          ],
+          "note": "Your message bounces. Nobody is answering on the other side. Fifteen minutes are gone.",
+          "why": "Negotiation assumes someone on the other side wants a deal. When the 'ransom' is cover for destruction, there is nobody to negotiate with, and every minute spent here is a minute the worm spends spreading."
+        },
+        {
+          "key": "C",
+          "label": "Pay for one machine first, to test whether the key really works",
+          "short": "Paid for a test key",
+          "effects": {
+            "minutes": 10,
+            "money": 300,
+            "set": {
+              "paid": true
+            },
+            "points": -10
+          },
+          "tags": [
+            "MITRE ATT&CK T1485 · Data Destruction",
+            "Ransom payment"
+          ],
+          "note": "The payment goes through. The key never comes, and analysts later show it couldn't have worked anyway.",
+          "why": "A small payment is still a payment to the attacker, with the same legal and ethical problems. And here no key exists that could restore the data."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 3,
+            "points": 10,
+            "set": {
+              "refusedRansom": true
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Detection & Analysis",
+            "MITRE ATT&CK T1485 · Data Destruction"
+          ],
+          "note": "You refuse all three: \"Nobody pays anything until we know what this is.\" Two teammates lean over with their own ideas.",
+          "why": "All three options treat the note as an honest offer. When the facts (random keys, one email address, boot records overwritten) say it's destruction in disguise, the right answer is none of them: analyse it and stop the spread."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "echo",
+          "text": "Get a sample to the malware team now. Find out what this thing really does before anyone pays a cent.",
+          "short": "Sent a sample for analysis",
+          "correct": true,
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "analysed": true
+            }
+          }
+        },
+        {
+          "by": "jayson",
+          "text": "Restore last night's backups to the infected machines straight away.",
+          "short": "Restored backups immediately",
+          "correct": false,
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "restoredEarly": true
+            }
+          }
+        },
+        {
+          "by": "moritz",
+          "text": "Start cutting the network into pieces now, before it reaches the data centres.",
+          "short": "Started segmenting",
+          "correct": true,
+          "effects": {
+            "minutes": 2,
+            "set": {
+              "segmentStarted": true
+            }
+          }
+        },
+        {
+          "by": "iris",
+          "text": "Email them and ask what they really want. Maybe there's a deal.",
+          "short": "Emailed the attackers",
+          "correct": false,
+          "effects": {
+            "minutes": 5
+          }
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Pay for one machine. If the key works, you've bought certainty for $300.",
+          "misleading": true
+        },
+        "echo": {
+          "hint": "Look at the installation keys. If they're random, there's nothing to buy.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "No payment without Legal, sanctions checks and proof that payment restores anything.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "One email address for the whole world? Nobody's planning to answer.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "network"
+        }
+      ]
+    },
+    "network": {
+      "phase": "Containment",
+      "title": "Pull the plug?",
+      "body": "{clock}. The malware team is sure now. The worm spreads by itself, machine to machine, with stolen administrator passwords. Every connected Windows machine is in reach. The network team waits for your word.",
+      "logs": [
+        {
+          "text": "Analyst | Encryption key in ransom screen cannot decrypt anything; data destruction is the goal",
+          "type": "hi"
+        }
+      ],
+      "spread": {
+        "label": "Machines wiped so far:",
+        "start": 9000,
+        "total": 38000,
+        "perSecond": 90,
+        "slowAfter": 30,
+        "slowEvent": {
+          "flag": "hesitatedNetwork",
+          "meters": {
+            "A": -15
+          },
+          "penalty": 5,
+          "text": "While the decision waited, the worm crossed into three more regional offices. Their staff watched it happen screen by screen."
+        }
+      },
+      "notes": {
+        "iris": "A worm with admin passwords moves faster than any meeting. Whatever you do, do it all at once.",
+        "echo": "The worm uses the same stolen credentials everywhere. Any link that's still up is a road.",
+        "moritz": "Segmentation slows a worm, but only segments that already exist. You can't draw new walls faster than this spreads.",
+        "jayson": "Isolating one site at a time is a race. I'm faster than you."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Pull the plug on everything: disconnect every site from the network and the internet now, all at once",
+          "short": "Disconnected everything",
+          "effects": {
+            "minutes": 5,
+            "meters": {
+              "A": -15
+            },
+            "set": {
+              "netCut": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "MITRE ATT&CK T1210 · Exploitation of Remote Services"
+          ],
+          "note": "The links go dark one after another within minutes. Business stops everywhere, including the parts that were still working. The worm stops too.",
+          "why": "Against a fast, self-spreading worm with stolen administrator credentials, partial measures lose the race. Cutting every connection at once hurts, but it's the only containment faster than the spread.",
+          "whyDeep": "NIST SP 800-61 says containment strategies depend on the damage, the need to preserve evidence and service availability. Here availability is already lost and spreading, so the fastest full disconnection wins. MITRE ATT&CK describes the spread as Exploitation of Remote Services (T1210) together with stolen credentials (OS Credential Dumping, T1003)."
+        },
+        {
+          "key": "B",
+          "label": "Isolate sites one by one, starting with the most important",
+          "short": "Isolated site by site",
+          "effects": {
+            "minutes": 20,
+            "set": {
+              "isolated": true
+            },
+            "points": 4
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "A": 10
+              },
+              "note": "Moritz's ability: the segments he pushed for last year hold for three regions, so isolating them takes seconds. Availability +10."
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "Each site takes a few minutes. The worm doesn't wait for your list. By the time the last site is cut, most of them are already wiped.",
+          "why": "Sensible against a slow attacker; too slow against this one. A worm that spreads in minutes reaches site 20 while you're still cutting site 3."
+        },
+        {
+          "key": "C",
+          "label": "Shut down the update server that sent out the poisoned update",
+          "short": "Shut the update server",
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "updateOff": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "MITRE ATT&CK T1195.002 · Compromise Software Supply Chain"
+          ],
+          "note": "The update server goes quiet. The worm doesn't need it any more: it's spreading on its own.",
+          "why": "Closing the way in is right, but it's not containment. The worm is already inside and moving machine to machine."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 5,
+            "points": 2
+          },
+          "tags": [
+            "Business continuity"
+          ],
+          "note": "You reject all three. Pulling the plug was the move, and the counter kept climbing while you looked for a better one.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option was sound practice, so rejecting it costs extra points."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "jayson"
+          },
+          "label": "Push your own emergency script to every machine to kill the malware's process",
+          "short": "Pushed a kill script",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "killScript": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "The script reaches the machines that are still alive, just as many of them reboot into the ransom screen. It changes almost nothing.",
+          "why": "Jayson's habit: a clever fix, fast. But the worm moves faster than a script can be tested and pushed, and the push itself uses the same compromised network."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "echo",
+          "text": "Cut every link at once.",
+          "short": "Cut every link",
+          "correct": true
+        },
+        {
+          "by": "jayson",
+          "text": "Write a script to kill it everywhere.",
+          "short": "Wrote a script",
+          "correct": false
+        },
+        {
+          "by": "moritz",
+          "text": "Disconnect all sites and the internet now; business can wait.",
+          "short": "Disconnected all sites",
+          "correct": true
+        },
+        {
+          "by": "iris",
+          "text": "Ask each country manager which sites matter most.",
+          "short": "Asked the managers",
+          "correct": false
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "All at once. Anything slower is a list the worm reads faster than you do.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Every link that stays up is another road for the stolen passwords.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Painful, but total disconnection is the only containment that beats this speed.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "If you go site by site, I'll be waiting at the next one.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "lastcopy"
+        }
+      ]
+    },
+    "lastcopy": {
+      "clockAt": "15:00",
+      "phase": "Recovery",
+      "title": "The last copy",
+      "body": "{clock}. The damage count comes in. Thousands of machines are wiped, and so is every online copy of the identity directory, the system that lets anyone log in to anything. They all synchronised with each other, so they all fell together. Then the West Africa office calls: their directory server went offline in a power cut this morning, before the worm arrived.",
+      "logs": [
+        {
+          "text": "Recovery | Only clean identity database copy: server ACC-LGS-01, offline after a power cut",
+          "type": "info"
+        }
+      ],
+      "notes": {
+        "iris": "That box is now the most valuable object the company owns. Treat it like one.",
+        "echo": "ACC-LGS-01's last sync was at 09:20, before the poisoned update at 09:41. Its copy should be clean. Should.",
+        "moritz": "A clean copy must stay isolated until it's in a clean environment. Never connect it to a network you haven't rebuilt.",
+        "jayson": "Some machines in that office are infected and still switched on. Anything that joins that network is mine."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Keep the server off and disconnected. Fly someone out to bring its disk to the recovery centre",
+          "short": "Flew the disk in",
+          "effects": {
+            "minutes": 30,
+            "set": {
+              "copySafe": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-34 · Contingency planning",
+            "Offline backups"
+          ],
+          "note": "A colleague takes the first flight out with the disk in hand luggage. It's slow and nerve-racking, and the copy arrives untouched.",
+          "why": "The only clean copy has to stay offline until it reaches a clean, isolated network. A day's travel is nothing compared to losing the only way back into every system.",
+          "whyDeep": "NIST SP 800-34 (Contingency Planning Guide) recommends keeping backups and alternate copies protected and separate, so one event can't destroy both the system and its backup. Offline or offsite copies are exactly what survives a worm that reaches everything connected."
+        },
+        {
+          "key": "B",
+          "label": "Ask the office to power it on and send its data over the network as fast as possible",
+          "short": "Sent it over the network",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "copyOnline": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "Offline backups"
+          ],
+          "note": "The office staff power the server on and plug it in.",
+          "why": "Connecting the last clean copy to a network with infected machines on it exposes it to the same worm. Speed is worthless if the copy doesn't survive the transfer."
+        },
+        {
+          "key": "C",
+          "label": "Power it on just long enough to check it's healthy, with the office network still connected",
+          "short": "Powered it on to check",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "copyOnline": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "Offline backups"
+          ],
+          "note": "The server boots. The health check looks fine for about a minute.",
+          "why": "Any time on a network with infected machines is enough for a self-spreading worm. Checks happen later, in a clean environment."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 5,
+            "points": 2
+          },
+          "tags": [
+            "Business continuity"
+          ],
+          "note": "You reject all three. Keeping it offline and carrying it was the safe option, and it's waiting for a decision.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option was sound practice, so rejecting it costs extra points."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "iris"
+          },
+          "label": "Call in a favour: get a charter flight cleared within the hour to carry the disk",
+          "short": "Arranged a charter",
+          "effects": {
+            "minutes": 15,
+            "money": 40000,
+            "set": {
+              "copySafe": true,
+              "charter": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-34 · Contingency planning",
+            "Offline backups"
+          ],
+          "note": "Iris knows someone who knows a charter company. The disk lands in the evening instead of the next morning.",
+          "why": "Iris's ability: negotiation. Same safe principle (the copy never touches a network), half a day sooner, at a price worth paying."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Keep it offline and carry it.",
+          "short": "Carried it offline",
+          "correct": true
+        },
+        {
+          "by": "jayson",
+          "text": "Unplug the other machines, then connect it.",
+          "short": "Unplugged the others first",
+          "correct": false
+        },
+        {
+          "by": "echo",
+          "text": "Don't power it on at all until it's in the clean room.",
+          "short": "Kept it powered off",
+          "correct": true
+        },
+        {
+          "by": "iris",
+          "text": "Copy it to a cloud drive from the office.",
+          "short": "Copied it to the cloud",
+          "correct": false
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "That disk travels by hand. Nothing else is safe enough.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Its last sync was before the update. Don't let it sync again.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Isolated until it's inside a rebuilt, clean network. No exceptions.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "A flight takes a day. Send it over the network and you have it in an hour.",
+          "misleading": true
+        }
+      },
+      "next": [
+        {
+          "to": "manual"
+        }
+      ]
+    },
+    "manual": {
+      "clockAt": "07:00",
+      "days": 1,
+      "phase": "Recovery",
+      "title": "Paper and whiteboards",
+      "body": [
+        {
+          "if": {
+            "flag": "lastCopyLost"
+          },
+          "text": "Next day, {clock}. With the last copy gone, the identity directory will have to be rebuilt from nothing, a job of weeks. Meanwhile ships keep arriving at Varga's ports, and the terminals have no systems to tell the cranes what to load."
+        },
+        {
+          "text": "Next day, {clock}. The identity directory can be rebuilt from ACC-LGS-01, but bringing everything back will take days. Meanwhile ships keep arriving at Varga's ports, and the terminals have no systems to tell the cranes what to load."
+        }
+      ],
+      "notes": {
+        "iris": "Customers forgive a delay. They don't forgive silence.",
+        "echo": "There are 300 spare laptops in storage, still in their boxes. Nobody has checked the network they'd connect to.",
+        "moritz": "This is what the business continuity plan is for: manual procedures, practised before they're needed.",
+        "jayson": "Rush machines back onto a dirty network and I get a second go."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Switch to the continuity plan: run terminals on paper, whiteboards and phones, and tell customers honestly what to expect",
+          "short": "Ran the ports on paper",
+          "effects": {
+            "minutes": 30,
+            "set": {
+              "manualOps": true
+            },
+            "points": 10
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz's weakness: his customer update is precise and full of jargon, and customers don't understand when their cargo moves. Reputation −5."
+            }
+          },
+          "tags": [
+            "NIST SP 800-34 · Contingency planning",
+            "Business continuity"
+          ],
+          "note": "Gate staff write container numbers on whiteboards. Bookings come in by phone and are copied by hand. It's slow and messy, and cargo keeps moving.",
+          "why": "When systems are gone, the business survives on practised manual procedures and honest communication. Restoring IT is the long game; keeping goods moving is today's job."
+        },
+        {
+          "key": "B",
+          "label": "Close every terminal until the systems are back",
+          "short": "Closed the terminals",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "A": -15,
+              "R": -10
+            },
+            "set": {
+              "closed": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "Business continuity"
+          ],
+          "note": "Ships queue outside the ports. Perishable cargo starts to spoil. Customers move their bookings to competitors.",
+          "why": "Shutting everything down is safe for IT and terrible for the business. Continuity plans exist so a company can keep working, more slowly, while systems are rebuilt."
+        },
+        {
+          "key": "C",
+          "label": "Unbox the 300 spare laptops and connect them to the network so people can work",
+          "short": "Plugged in spare laptops",
+          "effects": {
+            "minutes": 20,
+            "set": {
+              "laptopsPlugged": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "NIST SP 800-61 · Recovery"
+          ],
+          "note": "Staff cheer as the laptops come out. Nobody checks whether every infected machine on that network has been switched off.",
+          "why": "New machines on a network that hasn't been cleaned can be infected just like the old ones. Rebuild a clean network first, then connect clean machines to it."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 5,
+            "points": 2
+          },
+          "tags": [
+            "Business continuity"
+          ],
+          "note": "You reject all three. Running the ports on paper was what the continuity plan was written for.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option was sound practice, so rejecting it costs extra points."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Open the continuity plan and run the ports by hand.",
+          "short": "Ran the ports by hand",
+          "correct": true
+        },
+        {
+          "by": "jayson",
+          "text": "Plug in the spare laptops and go.",
+          "short": "Plugged in the laptops",
+          "correct": false
+        },
+        {
+          "by": "echo",
+          "text": "Paper and phones for now, honest updates to customers.",
+          "short": "Used paper and phones",
+          "correct": true
+        },
+        {
+          "by": "iris",
+          "text": "Close everything and say nothing until it's fixed.",
+          "short": "Closed and stayed silent",
+          "correct": false
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Tell customers what's happening, in plain words, every day.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Closing the ports is the safe choice. Nothing can go wrong in a closed terminal.",
+          "misleading": true
+        },
+        "moritz": {
+          "hint": "Manual procedures from the continuity plan. That's what they're for.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Don't give me a second network to play with. Keep things offline until it's clean.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "recovery"
+        }
+      ]
+    },
+    "recovery": {
+      "phase": "Recovery",
+      "title": "What comes back first?",
+      "body": [
+        {
+          "if": {
+            "flag": "lastCopyLost"
+          },
+          "text": "{clock}. A clean network is ready, and the identity directory is being rebuilt by hand, account by account. The board wants a recovery plan. Put the systems in the order they should come back."
+        },
+        {
+          "text": "{clock}. A clean network is ready, and the disk from ACC-LGS-01 is in the recovery centre. The board wants a recovery plan. Put the systems in the order they should come back."
+        }
+      ],
+      "notes": {
+        "iris": "Ask what each system needs, and what the business needs first.",
+        "echo": "Every system here logs people in through the identity directory. Every one.",
+        "moritz": "Dependencies decide the order. Business impact decides between systems that are ready at the same time.",
+        "jayson": "If you bring up a system before what it depends on, it just sits there broken, and somebody 'fixes' it in a hurry."
+      },
+      "order": {
+        "prompt": "The continuity plan says: cargo first, everything else after. Each system lists what it needs to run. Click the systems in the order they should come back, then confirm.",
+        "items": [
+          {
+            "id": "booking",
+            "label": "Booking system",
+            "needs": [
+              "identity",
+              "network"
+            ],
+            "why": "Customers' bookings say what goes on which ship. Cargo first, so it comes right after the foundations."
+          },
+          {
+            "id": "finance",
+            "label": "Finance and payroll",
+            "needs": [
+              "identity",
+              "network"
+            ],
+            "hint": "Continuity plan: the next payroll run is in nine days.",
+            "why": "Important, but the plan gives it nine days. It comes back after the systems that move cargo."
+          },
+          {
+            "id": "identity",
+            "label": [
+              {
+                "if": {
+                  "flag": "lastCopyLost"
+                },
+                "text": "Identity directory (rebuilt from scratch)"
+              },
+              {
+                "text": "Identity directory (from ACC-LGS-01)"
+              }
+            ],
+            "needs": [],
+            "why": "Nothing else can log anyone in without it. It always comes first."
+          },
+          {
+            "id": "terminal",
+            "label": "Terminal operating systems at the ports",
+            "needs": [
+              "booking",
+              "network"
+            ],
+            "why": "The cranes need to know what to load, and that comes from bookings. It follows the booking system."
+          },
+          {
+            "id": "network",
+            "label": "Core network services (addresses, name lookup)",
+            "needs": [
+              "identity"
+            ],
+            "why": "In Varga's setup these services depend on the identity directory, and every application depends on them."
+          }
+        ],
+        "correct": [
+          "identity",
+          "network",
+          "booking",
+          "terminal",
+          "finance"
+        ],
+        "points": 10,
+        "clashMinutes": 60,
+        "firstFlag": "identityFirst",
+        "perfectFlag": "orderRight",
+        "effects": {
+          "minutes": 30
+        },
+        "tags": [
+          "NIST SP 800-34 · Contingency planning",
+          "Recovery priorities"
+        ],
+        "note": "Over the next days, systems come back in the order you set. Each false start, a system brought back before what it needs, costs the team an hour of troubleshooting.",
+        "why": "Recovery order follows dependencies first (identity, then the network services everything uses), then business impact (what keeps cargo moving). A business impact analysis written before the crisis makes this an easy decision instead of a debate.",
+        "whyDeep": "NIST SP 800-34 describes the business impact analysis: identifying critical processes, how long they can be down, and the order systems must be recovered in, including dependencies between them."
+      },
+      "consult": {
+        "iris": {
+          "hint": "What can't anything else live without? Start there.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Count how many systems log in through the directory. All of them.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Dependencies first, then the business impact analysis.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Payroll first. Unpaid staff will walk out, and then nothing gets restored.",
+          "misleading": true
+        }
+      },
+      "next": [
+        {
+          "to": "after"
+        }
+      ]
+    },
+    "after": {
+      "phase": "Post-Incident Activity",
+      "title": "Never again",
+      "body": "{clock}. Ten days later, the ports run on rebuilt systems. The board meets to decide what changes. Two consultants have already sent proposals; one is just an insurance policy.",
+      "notes": {
+        "iris": "Insurance pays for some damage. It doesn't stop the next worm.",
+        "echo": "The worm came in through a trusted update and spread with admin passwords. Both need fixing.",
+        "moritz": "Offline backups, tested restores, segmentation, patching, fewer admin rights, practised manual procedures. All of them.",
+        "jayson": "Next time I'll pick a different supplier's update. What stops me then?"
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Fund offline, tested backups of identity and critical systems, real network segmentation, patching, fewer admin rights and yearly manual-operations drills",
+          "short": "Funded real resilience",
+          "effects": {
+            "minutes": 60,
+            "set": {
+              "lessonsDone": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Post-Incident Activity",
+            "NIST SP 800-34 · Contingency planning",
+            "MITRE ATT&CK T1003 · OS Credential Dumping"
+          ],
+          "note": "The plan is expensive and unglamorous. The first restore drill finds two backups that don't work. That is the point.",
+          "why": "The worm got in through a trusted update, spread with stolen admin credentials and unpatched systems, and destroyed everything connected. Each lesson maps to a control: limit what updates and admins can reach, keep offline copies, test restoring them, and practise working without IT."
+        },
+        {
+          "key": "B",
+          "label": "Buy a bigger cyber-insurance policy and move on",
+          "short": "Bought insurance",
+          "effects": {
+            "minutes": 20,
+            "set": {
+              "insured": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "Risk transfer"
+          ],
+          "note": "The policy is signed. Its small print about large-scale and state-linked attacks is long and hard to read.",
+          "why": "Insurance can transfer some financial risk, but it restores no systems, stops no worm, and policies may exclude some kinds of attack. It complements resilience; it doesn't replace it."
+        },
+        {
+          "key": "C",
+          "label": "Ban the accounting software, blame its maker publicly, and change nothing else",
+          "short": "Blamed the supplier",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -5
+            },
+            "set": {
+              "blamedSupplier": true
+            },
+            "points": 1
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz's weakness: his press statement lists technical faults in detail and sounds like an excuse. Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "Incident communication"
+          ],
+          "note": "Headlines move on in a week. The next trusted update from any supplier could do the same.",
+          "why": "The supplier was the way in, but the damage came from flat networks, shared admin credentials and missing offline copies. Blaming one vendor fixes none of that."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 5,
+            "points": 2
+          },
+          "tags": [
+            "Business continuity"
+          ],
+          "note": "You reject all three. Funding real resilience was the answer the incident taught.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option was sound practice, so rejecting it costs extra points."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Offline backups, segmentation and drills.",
+          "short": "Backups, segments, drills",
+          "correct": true
+        },
+        {
+          "by": "jayson",
+          "text": "Ban all software updates.",
+          "short": "Banned updates",
+          "correct": false
+        },
+        {
+          "by": "echo",
+          "text": "Fix the way in and the way it spread.",
+          "short": "Fixed entry and spread",
+          "correct": true
+        },
+        {
+          "by": "iris",
+          "text": "Insurance and a good PR agency.",
+          "short": "Insurance and PR",
+          "correct": false
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Spend on what would have made this a bad day instead of a catastrophe.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Trusted updates and shared admin passwords. Fix both.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Transferring risk is a recognised treatment. Buy the insurance and close the case.",
+          "misleading": true
+        },
+        "jayson": {
+          "hint": "Ban one supplier and I'll use another. Make my spread slow, not my entry hard.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "end"
+        }
+      ]
+    }
+  },
+  "endings": [
+    {
+      "if": {
+        "flag": "lastCopyLost"
+      },
+      "grade": "The last copy, gone",
+      "tone": "bad",
+      "text": "The one clean copy of the identity directory was plugged into an infected network and wiped in seconds. Varga Maritime rebuilt its identity from nothing, account by account, over weeks it didn't have."
+    },
+    {
+      "if": {
+        "flag": "paid"
+      },
+      "grade": "Paid for nothing",
+      "tone": "bad",
+      "text": "Varga paid a 'ransom' to an attacker who had no key and no intention of giving one. The data was destroyed either way, and the money went to whoever built the weapon."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "dataCentres"
+          },
+          {
+            "flag": "partners"
+          }
+        ]
+      },
+      "grade": "Rooted",
+      "tone": "bad",
+      "text": "The worm reached the data centres, then the partners. By the time it ran out of machines, there was little left to protect and a long list of other companies asking why Varga's network had attacked theirs."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "refusedRansom"
+          },
+          {
+            "flag": "netCut"
+          },
+          {
+            "flag": "copySafe"
+          },
+          {
+            "flag": "manualOps"
+          },
+          {
+            "flag": "identityFirst"
+          },
+          {
+            "flag": "lessonsDone"
+          },
+          {
+            "not": {
+              "flag": "dataCentres"
+            }
+          },
+          {
+            "not": {
+              "flag": "reinfection"
+            }
+          }
+        ]
+      },
+      "grade": "The last copy",
+      "tone": "good",
+      "text": "You saw through the ransom note, cut the network before the worm reached the data centres, and carried the last clean copy home by hand. Varga ran on paper for ten days and came back stronger."
+    },
+    {
+      "grade": "Back from the brink",
+      "tone": "mixed",
+      "text": "Varga Maritime recovered, but slow containment, a risky shortcut or a muddled recovery order made it longer and costlier than it had to be."
+    }
+  ],
+  "lessons": [
+    "A ransom note can be a disguise. If data is being destroyed, paying restores nothing.",
+    "Against a fast, self-spreading worm, contain everything at once. Partial measures lose the race.",
+    "Keep offline copies of critical systems, especially identity. A connected backup is just another target.",
+    "Never connect a clean copy to a network you haven't rebuilt.",
+    "Practise manual procedures before you need them; honest communication keeps customers.",
+    "Recover in dependency order (identity and core services first), then by business impact."
+  ],
+  "standards": [
+    "NIST SP 800-61 (Computer Security Incident Handling Guide)",
+    "NIST SP 800-34 Rev. 1 (Contingency Planning Guide for Federal Information Systems)",
+    "MITRE ATT&CK: T1195.002 Compromise Software Supply Chain, T1210 Exploitation of Remote Services, T1003 OS Credential Dumping, T1485 Data Destruction"
+  ],
+  "whatActuallyHappened": {
+    "title": "What actually happened…",
+    "paragraphs": [
+      "On 27 June 2017, a software update for M.E.Doc, accounting software used by a large share of Ukrainian businesses, carried malicious code. Researchers at ESET later found a backdoor on M.E.Doc's update service weeks earlier. The malware, soon called NotPetya, spread from machine to machine on its own, using the EternalBlue exploit against unpatched Windows systems (Microsoft had released a fix in March 2017) and passwords pulled from memory with techniques taken from the Mimikatz tool.",
+      "NotPetya showed a ransom note asking for $300 in Bitcoin, but researchers found that recovery was not possible: it was a wiper disguised as ransomware. It hit Ukrainian banks, ministries, media and energy companies, and through companies with offices in Ukraine it spread worldwide.",
+      "The shipping company A.P. Møller-Maersk was one of the hardest hit. Its chairman, Jim Hagemann Snabe, said in January 2018 at the World Economic Forum that the company had to reinstall 4,000 servers, 45,000 PCs and 2,500 applications, and that staff did it in about ten days, while volumes fell by about 20 percent. Maersk's damage has been estimated at around $300 million.",
+      "Maersk's domain controllers, the servers holding its identity directory, had synchronised with each other and were wiped together. According to reporting by Wired's Andy Greenberg (summarised by Redmond Magazine), a blackout had knocked one in Ghana offline before the attack, leaving the only known clean copy. It was brought to the recovery operation near London. TODO: verify the transport details against the original Wired article before publishing.",
+      "The White House called NotPetya \"the most destructive and costly cyberattack in history\" and put total damage above $10 billion. In February 2018 the US and UK governments attributed it to the Russian military. On 19 October 2020 the US Department of Justice announced charges against six officers of GRU Unit 74455 (tracked by researchers as \"Sandworm\") for NotPetya and other attacks; it said three US victims alone lost close to $1 billion."
+    ],
+    "sources": [
+      {
+        "label": "US Department of Justice: Six Russian GRU officers charged in connection with worldwide deployment of destructive malware (19 October 2020)",
+        "url": "https://www.justice.gov/archives/opa/pr/six-russian-gru-officers-charged-connection-worldwide-deployment-destructive-malware-and"
+      },
+      {
+        "label": "Security Affairs: Maersk chair revealed its company reinstalled 45,000 PCs and 4,000 servers after NotPetya attack (January 2018)",
+        "url": "https://securityaffairs.com/68227/security/maersk-notpetya-attack.html"
+      },
+      {
+        "label": "Redmond Magazine (Scott Bekker): the domain controller nightmare, on Wired's account of the Ghana domain controller (August 2018)",
+        "url": "https://redmondmag.com/blogs/scott-bekker/2018/08/domain-controller-nightmare.aspx"
+      },
+      {
+        "label": "Wikipedia: 2017 cyberattacks on Ukraine (summary with links to ESET, Cisco Talos, White House and UK statements)",
+        "url": "https://en.wikipedia.org/wiki/2017_cyberattacks_on_Ukraine"
+      }
+    ]
+  }
+}

@@ -1,0 +1,950 @@
+{
+  "id": "05-alarm",
+  "level": 5,
+  "title": "The Alarm Nobody Answered",
+  "tier": "intermediate",
+  "lighting": "twilight",
+  "options": 4,
+  "real": {
+    "dates": "November–December 2013"
+  },
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": {
+    "clock": "17:20",
+    "node": "queue"
+  },
+  "alarmAt": "17:20",
+  "introChoice": null,
+  "briefing": "Saturday of the busiest shopping week of the year. Brightline Security runs the security monitoring for Halvorsen Mart, a retail chain with 1,800 registers. The stores are packed, and so is your alert queue: twenty new alerts since lunch. You can't open them all before dark.",
+  "attacker": {
+    "activeWhile": {
+      "not": {
+        "all": [
+          {
+            "flag": "posContained"
+          },
+          {
+            "flag": "vendorClosed"
+          }
+        ]
+      }
+    },
+    "events": [
+      {
+        "at": 40,
+        "if": {
+          "not": {
+            "flag": "posFound"
+          }
+        },
+        "flag": "ignoredAlert",
+        "text": "The register alert slips below newer ones in the queue. The security vendor escalates it to your SOC as urgent. Nobody opens it.",
+        "log": "Nov 30 Security vendor · Malware alert escalated to SOC · no response logged"
+      },
+      {
+        "at": 90,
+        "if": {
+          "all": [
+            {
+              "flag": "posContained"
+            },
+            {
+              "not": {
+                "flag": "vendorClosed"
+              }
+            }
+          ]
+        },
+        "flag": "reinfected",
+        "meters": {
+          "I": -10
+        },
+        "text": "The vendor portal shows the HVAC account signing in again after dark, and EDR flags the same unknown process on registers that had been cleaned. The door you left open was used twice."
+      },
+      {
+        "at": 120,
+        "if": {
+          "all": [
+            {
+              "any": [
+                {
+                  "not": {
+                    "flag": "posContained"
+                  }
+                },
+                {
+                  "flag": "reinfected"
+                }
+              ]
+            },
+            {
+              "not": {
+                "flag": "exfilFound"
+              }
+            }
+          ]
+        },
+        "flag": "bulkCards",
+        "meters": {
+          "C": -30
+        },
+        "text": "For days, card data from live registers piles up on an internal server and leaves the network in nightly transfers. Nobody is watching that route."
+      },
+      {
+        "at": 120,
+        "if": {
+          "all": [
+            {
+              "any": [
+                {
+                  "not": {
+                    "flag": "posContained"
+                  }
+                },
+                {
+                  "flag": "reinfected"
+                }
+              ]
+            },
+            {
+              "flag": "exfilFound"
+            }
+          ]
+        },
+        "flag": "cardsStaged",
+        "meters": {
+          "C": -10
+        },
+        "text": "Card data from live registers keeps piling up on an internal server, but the outbound route you found and blocked in triage holds. Only a small batch left before the block."
+      },
+      {
+        "onEnter": "bank",
+        "if": {
+          "flag": "bulkCards"
+        },
+        "flag": "massBreach",
+        "meters": {
+          "R": -25
+        },
+        "money": 4200000,
+        "penalty": 10,
+        "text": "The bank's call confirms it: cards from Halvorsen Mart registers are for sale in bulk. Estimated cost of fraud, card replacement and fines: $4,200,000. One alert opened on November 30 would have stopped it.",
+        "log": "Dec 12 Bank · Cards used at Halvorsen Mart appearing for sale · sample **** **** **** 0000"
+      }
+    ]
+  },
+  "nodes": {
+    "queue": {
+      "phase": "Detection & Analysis",
+      "title": "Twenty alerts",
+      "body": "{clock}. Twenty alerts, one analyst, peak trading. You have time to open four of them properly before the evening rush hits the stores. Most will be noise. Which ones do you open?",
+      "logs": [
+        {
+          "text": "17:20 SIEM · 20 open alerts · oldest 6 h · on shift: 1 analyst",
+          "type": "warn",
+          "review": "TODO: author review"
+        }
+      ],
+      "notes": {
+        "iris": "Peak week at a retailer. If someone is in, they want card data, and lots of it. Follow the money: registers, and whatever leaves the building.",
+        "echo": "Echo's extra clue: one alert says auto-remediation is DISABLED. Security tools don't switch themselves off. Someone decided that.",
+        "moritz": "Ask which alerts touch the payment environment or cross a trust boundary. Everything else can wait an hour.",
+        "jayson": "If I wanted in here, I wouldn't attack the firewall. I'd log in as somebody they already trust, at an hour nobody's watching."
+      },
+      "queue": {
+        "prompt": "Open the alerts you think matter. Severity labels come from the tools, and the tools are not always right.",
+        "budget": 4,
+        "minutesPerAlert": 10,
+        "points": 10,
+        "noiseShort": "Chased a false alarm",
+        "alerts": [
+          {
+            "text": "AV: adware on kiosk-12 (store 041)",
+            "sev": "low",
+            "why": "Adware on a public kiosk: annoying, worth a ticket, but it doesn't touch payments."
+          },
+          {
+            "text": "Failed login x3 – printer service account",
+            "sev": "low",
+            "why": "Three failed logins from a printer account usually mean a stale saved password, not an attack."
+          },
+          {
+            "text": "Vendor portal login – Frostline HVAC (fictional vendor) – 02:14, new IP 198.51.100.40",
+            "sev": "mid",
+            "real": true,
+            "short": "Opened the HVAC vendor login alert",
+            "set": {
+              "vendorFound": true
+            },
+            "why": "Real. A heating and cooling contractor has no reason to log in at 02:14 from an address it has never used. A trusted vendor's account is a perfect disguise."
+          },
+          {
+            "text": "Disk 91% full – reporting server",
+            "sev": "low",
+            "why": "A capacity problem for IT operations, not a security incident."
+          },
+          {
+            "text": "Expired certificate – internal wiki",
+            "sev": "low",
+            "why": "An expired internal certificate is a maintenance task. Nothing is under attack."
+          },
+          {
+            "text": "Port scan from 192.0.2.10 (authorised weekly scanner)",
+            "sev": "mid",
+            "why": "The company's own weekly vulnerability scanner. Expected traffic, correctly labelled."
+          },
+          {
+            "text": "USB storage inserted – HQ marketing laptop",
+            "sev": "low",
+            "why": "Worth a policy reminder, but a marketing laptop at HQ is far from the payment systems."
+          },
+          {
+            "text": "Password spray blocked – 5 accounts, external IP",
+            "sev": "low",
+            "why": "The control worked: the attempt was blocked. Background noise of the internet."
+          },
+          {
+            "text": "Phishing email quarantined – \"Your parcel is waiting\"",
+            "sev": "low",
+            "why": "Quarantined before anyone clicked. The filter did its job."
+          },
+          {
+            "text": "EDR: unknown process \"pos_svc_upd\" reading payment-app memory on 1,180 registers · auto-remediation: DISABLED",
+            "sev": "hi",
+            "real": true,
+            "short": "Opened the register malware alert",
+            "set": {
+              "posFound": true
+            },
+            "why": "Real, and the most urgent. An unknown process reading payment-app memory is exactly what card-stealing malware does, and it is on 1,180 registers. Auto-remediation was switched off, so nothing will remove it unless you act."
+          },
+          {
+            "text": "Time sync drift – 2 registers",
+            "sev": "low",
+            "why": "Two registers with clock drift: a routine fix."
+          },
+          {
+            "text": "Guest Wi-Fi bandwidth spike – store 007",
+            "sev": "low",
+            "why": "Shoppers streaming on guest Wi-Fi during a sale. Guest Wi-Fi is kept apart from the store network."
+          },
+          {
+            "text": "Large outbound transfer: internal file server → external host [defanged] · 11 GB",
+            "sev": "mid",
+            "real": true,
+            "short": "Opened the outbound transfer alert",
+            "set": {
+              "exfilFound": true
+            },
+            "why": "Real. An internal file server has no business sending 11 GB to an unknown outside host. You block the destination and the route: whatever is being collected inside can no longer leave this way."
+          },
+          {
+            "text": "Admin login – IT manager, normal hours",
+            "sev": "low",
+            "why": "A known admin, at a normal time, from a normal place. Exactly what it looks like."
+          },
+          {
+            "text": "Antivirus definitions out of date – 6 back-office PCs",
+            "sev": "low",
+            "why": "A hygiene issue to fix this week, not an active attack."
+          },
+          {
+            "text": "Account locked – cashier, store 019",
+            "sev": "low",
+            "why": "A cashier forgot a password during a busy shift. The lockout worked as designed."
+          },
+          {
+            "text": "DNS lookup to newly registered domain – marketing tool",
+            "sev": "low",
+            "why": "A marketing tool trying a new campaign domain. Worth a look later; nothing touches payments."
+          },
+          {
+            "text": "Firewall config backup completed",
+            "sev": "low",
+            "why": "An informational success message."
+          },
+          {
+            "text": "Badge reader offline – warehouse door 3",
+            "sev": "low",
+            "why": "A physical-security maintenance ticket."
+          },
+          {
+            "text": "Software update – loyalty app",
+            "sev": "low",
+            "why": "A scheduled, expected update."
+          }
+        ],
+        "note": [
+          {
+            "if": {
+              "all": [
+                {
+                  "flag": "vendorFound"
+                },
+                {
+                  "flag": "posFound"
+                },
+                {
+                  "flag": "exfilFound"
+                }
+              ]
+            },
+            "text": "Three real signals out of twenty: the way in (a vendor login), the theft (malware on the registers) and the way out (the outbound transfer). You have the whole picture."
+          },
+          {
+            "if": {
+              "flag": "posFound"
+            },
+            "text": "You found the malware on the registers, the alert that matters most. Part of the picture is still missing."
+          },
+          {
+            "text": "Your time is spent and the register malware alert is still unopened, somewhere in the queue."
+          }
+        ],
+        "why": "Alert fatigue is real: most alerts are noise, and the real ones hide among them. Triage by impact, not by order: what touches the payment environment, what crosses a trust boundary (like a vendor), and what leaves the network.",
+        "whyDeep": "NIST SP 800-61 describes prioritising incidents by functional and information impact. Here that means payment-card data first: PCI DSS v4.0 Requirement 10.4.1 asks for security logs and alerts to be reviewed at least daily, and Requirement 12.10.5 includes alerts from security monitoring systems in the incident response plan.",
+        "tags": [
+          "NIST SP 800-61 · Detection & Analysis",
+          "PCI DSS v4.0 · Req. 10.4 Log review",
+          "Alert triage"
+        ]
+      },
+      "consult": {
+        "iris": {
+          "hint": "Ignore anything a scanner, a printer or a cashier could explain. Look for the alerts that touch cards or money leaving.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Read past the severity labels. A medium alert at 02:14 can matter more than a loud low one.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Sort by trust boundaries: vendors coming in, payment systems, and data going out. That's three alerts, not twenty.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Start with the registers. That's where I'd be, and I wouldn't be alone in there.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "vendor"
+        }
+      ]
+    },
+    "vendor": {
+      "phase": "Containment",
+      "title": "The HVAC account",
+      "body": [
+        {
+          "if": {
+            "flag": "vendorFound"
+          },
+          "text": "{clock}. The 02:14 login came from Frostline HVAC's account, the contractor that services the stores' heating and cooling. Its remote access reaches far more of the network than a heating contractor should ever need."
+        },
+        {
+          "text": "{clock}. A colleague pings you: while checking something else, she noticed Frostline HVAC's account logging in at 02:14 last night, from a new address. The heating contractor's remote access reaches far more of the network than it should."
+        }
+      ],
+      "notes": {
+        "iris": "Contractors are the classic side door: trusted, poorly watched, and rarely as well protected as the company they serve.",
+        "echo": "That login stayed connected for three hours and touched systems an HVAC contractor never needs.",
+        "moritz": "Why can a heating contractor's account reach anything near the payment network? That's the architecture problem behind this alert.",
+        "jayson": "If I had that account, I'd use it again tonight. The question is whether it still works."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Disable the vendor's account now, reset its credentials, and review everything it touched",
+          "short": "Disabled the vendor account",
+          "effects": {
+            "minutes": 10,
+            "evidence": 20,
+            "set": {
+              "vendorClosed": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "MITRE ATT&CK T1199 · Trusted Relationship",
+            "MITRE ATT&CK T1078 · Valid Accounts"
+          ],
+          "note": "The account is off in ten minutes. Its session history goes into the case file: three hours on systems no heating contractor needs. Frostline gets a call explaining why its access is paused.",
+          "why": "A login that doesn't match the vendor's normal pattern is treated as compromised until proven otherwise. Disable first, then verify with the vendor through a known contact. You can always re-enable a legitimate account.",
+          "whyDeep": "Third-party access is a common way in (MITRE ATT&CK T1199, Trusted Relationship). PCI DSS v4.0 Requirement 8.2.7 says third-party remote access accounts should be enabled only when needed and monitored while in use."
+        },
+        {
+          "key": "B",
+          "label": "Call the vendor first and ask whether the login was theirs",
+          "short": "Called the vendor first",
+          "effects": {
+            "minutes": 30,
+            "set": {
+              "vendorClosed": true
+            },
+            "points": 6
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "MITRE ATT&CK T1199 · Trusted Relationship"
+          ],
+          "note": "Frostline's office manager calls back half an hour later: nobody worked at 02:14. You disable the account then, thirty minutes later than you could have.",
+          "why": "Verifying with the vendor is right, but it doesn't have to come first. The account can be paused while you check; a compromised account left open while you wait for a callback is time given away."
+        },
+        {
+          "key": "C",
+          "label": "Leave the account active and monitor it",
+          "short": "Left the vendor account open",
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "vendorWatched": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "You add the account to a watchlist. It stays open.",
+          "why": "Watching an attacker can make sense in a controlled setting with a plan. Here, nobody is watching overnight and the account reaches the store network. Monitoring without containment is an open door with a camera."
+        },
+        {
+          "key": "D",
+          "label": "Suspend every vendor's remote access until further notice",
+          "short": "Suspended all vendor access",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "A": -10
+            },
+            "set": {
+              "vendorClosed": true,
+              "allVendorsCut": true
+            },
+            "points": 6
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "MITRE ATT&CK T1199 · Trusted Relationship"
+          ],
+          "note": "The bad account is closed, along with forty good ones. By evening, freezer alarms in three stores have no contractor to answer them.",
+          "why": "It works, but it is wider than the problem. Containment should match the threat: the one suspicious vendor account now, then a review of every vendor's access over the following days."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "jayson"
+          },
+          "label": "Use the stolen vendor credentials to log into Frostline's own systems and see how they were breached",
+          "short": "Logged into the vendor's systems",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "R": -20
+            },
+            "set": {
+              "hackedBack": true
+            },
+            "points": -10
+          },
+          "tags": [
+            "Law · Unauthorised access"
+          ],
+          "note": "You get in. Frostline's IT contractor notices a login from Brightline's network and calls their lawyer before they call you.",
+          "why": "Using someone else's credentials to access their systems without permission is unauthorised access, for example under the US Computer Fraud and Abuse Act, even when your intentions are good. Ask the vendor to investigate, or bring in law enforcement."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "echo"
+          },
+          "label": "Watch the vendor account quietly yourself to map the intruder before telling anyone",
+          "short": "Watched the vendor account alone",
+          "effects": {
+            "minutes": 40,
+            "evidence": 30,
+            "set": {
+              "keptQuiet": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "Your map of the intruder's movements is beautiful. Nobody else knows it exists, and the account is still open.",
+          "why": "Echo's habit: keep the finding until it's complete. Your evidence is excellent, but the door stayed open while you collected it, and the team couldn't act on what only you knew."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Trust is the vulnerability here. Treat that account as the attacker's until someone proves otherwise.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Pull its session history before anything else changes. Then close it.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Close the one account, then ask the design question: why could it reach so much?",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "If that login works tonight, they'll use it tonight. Turn it off and verify afterwards.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "if": {
+            "any": [
+              {
+                "flag": "posFound"
+              },
+              {
+                "flag": "exfilFound"
+              }
+            ]
+          },
+          "to": "pos"
+        },
+        {
+          "to": "bank"
+        }
+      ]
+    },
+    "pos": {
+      "phase": "Containment",
+      "title": "Registers on the busiest day",
+      "body": [
+        {
+          "if": {
+            "not": {
+              "flag": "posFound"
+            }
+          },
+          "text": "{clock}. You trace the blocked 11 GB transfer back to its source: data gathered from the registers. The EDR alert you didn't open says why: an unknown process is reading payment-app memory on 1,180 registers, during the busiest trading week of the year. EDR could remove it automatically, but that feature was switched off months ago to avoid \"false positives at the tills\". The stores want to keep selling."
+        },
+        {
+          "text": "{clock}. The unknown process is running on 1,180 registers, during the busiest trading week of the year. EDR could remove it automatically, but that feature was switched off months ago to avoid \"false positives at the tills\". The stores want to keep selling."
+        }
+      ],
+      "notes": {
+        "iris": "Every hour those registers run, the card count goes up. That's the number the bank will quote back to you.",
+        "echo": "Echo's extra clue: the process writes into a shared folder on an internal server. That's where the stolen data is gathered before it leaves.",
+        "moritz": "Registers should sit in their own segment, able to talk to the payment processor and nothing else. Now is the moment to enforce that.",
+        "jayson": "If I were them, I'd hide among the busy registers and wait for the rush. Tonight is their payday."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Isolate the infected registers in a quarantine segment and turn EDR auto-remediation back on, store by store",
+          "short": "Isolated registers, remediation on",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "A": -10
+            },
+            "set": {
+              "posContained": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "PCI DSS v4.0 · Req. 1 Network security controls"
+          ],
+          "note": "Store by store, registers drop into quarantine, the process is removed, and they come back clean. Queues grow for twenty minutes in each store. No register sends anything anywhere else.",
+          "why": "Segmentation limits where malware can reach and where data can go; turning remediation back on removes it. Doing it store by store keeps most tills running. Availability matters, but not more than not stealing customers' cards.",
+          "whyDeep": "PCI DSS v4.0 Requirement 1 covers network security controls around the cardholder data environment, and segmentation is how the scope of that environment is kept small. In NIST SP 800-61 terms, this is short-term containment followed by eradication."
+        },
+        {
+          "key": "B",
+          "label": "Take every register in every store offline right now",
+          "short": "All registers offline",
+          "effects": {
+            "minutes": 15,
+            "meters": {
+              "A": -45,
+              "R": -10
+            },
+            "money": 900000,
+            "set": {
+              "posContained": true
+            },
+            "points": 5
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "CIA triad · Availability"
+          ],
+          "note": "Every till in the chain goes dark at 18:00 on a peak Saturday. The theft stops. So do sales: about $900,000 lost before the registers come back.",
+          "why": "It stops the theft, which is the main thing. But you had a narrower, faster option: isolating and cleaning registers in place. Containment should be as small as it can be while still stopping the harm."
+        },
+        {
+          "key": "C",
+          "label": "Wait until the holiday weekend is over",
+          "short": "Waited until after the holidays",
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "posWaited": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "The registers keep ringing up sales all weekend. The unknown process keeps reading every card.",
+          "why": "The busiest days are exactly when card-stealing malware collects the most. Delaying containment for sales multiplies the number of stolen cards."
+        },
+        {
+          "key": "D",
+          "label": "Only switch EDR auto-remediation back on",
+          "short": "Remediation on, no isolation",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "posContained": true,
+              "remediationOnly": true
+            },
+            "points": 4
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication"
+          ],
+          "note": "The process disappears from the registers within the hour. The registers are still reachable from the rest of the network, exactly as before.",
+          "why": "Removing the malware is necessary, but if the network path that put it there stays open, it can be put back. Containment (isolation) and eradication (removal) are separate steps for a reason."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Count the cards, not the sales. Each hour you wait is another few hundred thousand cards.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Find where the data is gathered, and cut it off along with the registers.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Isolate, then remediate. Segmentation is the control that should have been there from the start.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Don't take every till down. Take the attacker's access down.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "bank"
+        }
+      ]
+    },
+    "bank": {
+      "clockAt": "09:00",
+      "days": 12,
+      "phase": "Post-Incident Activity",
+      "title": "The bank calls",
+      "body": [
+        {
+          "if": {
+            "flag": "massBreach"
+          },
+          "text": "December 12, {clock}. A bank's fraud team is on the phone: cards used at Halvorsen Mart are being sold online, in bulk. Halvorsen Mart's executives want to know what to say, and to whom."
+        },
+        {
+          "text": "December 12, {clock}. A bank's fraud team is on the phone: a small batch of cards used at Halvorsen Mart in late November is showing fraud. Halvorsen Mart's executives want to know what to say, and to whom."
+        }
+      ],
+      "logs": [
+        {
+          "if": {
+            "not": {
+              "flag": "massBreach"
+            }
+          },
+          "text": "Dec 12 Bank · Fraud reported on a small batch of cards used at Halvorsen Mart in late November · sample **** **** **** 0000",
+          "type": "warn",
+          "review": "TODO: author review"
+        }
+      ],
+      "notes": {
+        "iris": "There's always a way to make this quieter. Bank fraud teams can be very understanding when someone else covers their losses.",
+        "echo": "The case file already shows which registers and which dates. You have more than enough to confirm this today.",
+        "moritz": "This is the conversation I'm worst at. Facts in plain language: what happened, which cards, what customers should do.",
+        "jayson": "The cards are out there already. Every day of silence is another day someone else uses them."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Confirm it with forensics today, notify the acquirer, card brands and law enforcement, and tell customers within days",
+          "short": "Confirmed and told everyone",
+          "effects": {
+            "minutes": 60,
+            "meters": {
+              "R": -5
+            },
+            "set": {
+              "toldAll": true
+            },
+            "points": 10
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz explains the breach in network diagrams; the press hears evasion. Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "PCI DSS v4.0 · Req. 12.10.1 Incident response plan",
+            "NIST SP 800-61 · Post-Incident Activity"
+          ],
+          "note": "The acquiring bank and the card brands hear it from you before the press does. Customers get a plain notice: which dates, what to watch on their statements, and that cards will be replaced free of charge.",
+          "why": "Card breaches have defined reporting paths: the acquirer, the card brands, and usually law enforcement. Customers need to know so they can watch their statements. Prompt, plain disclosure limits fraud and keeps trust."
+        },
+        {
+          "key": "B",
+          "label": "Say nothing until the full forensic report is final",
+          "short": "Waited for the full report",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "waitedReport": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Post-Incident Activity"
+          ],
+          "note": "The report takes three weeks. A journalist publishes the story in six days.",
+          "why": "Investigation continues after notification; it shouldn't block it. You already have enough to confirm the breach, and the cards keep being used while you wait."
+        },
+        {
+          "key": "C",
+          "label": "Tell the bank it can't be Halvorsen Mart without proof",
+          "short": "Denied it",
+          "effects": {
+            "minutes": 5,
+            "meters": {
+              "R": -20
+            },
+            "set": {
+              "denied": true
+            },
+            "points": -5
+          },
+          "tags": [
+            "PCI DSS v4.0 · Req. 12.10.1 Incident response plan"
+          ],
+          "note": "The bank sends its proof the next morning. Now it is in writing that you denied it.",
+          "why": "Your own case file already links the dates and registers. Denying a breach you can confirm breaks trust with the bank, the card brands and eventually the customers."
+        },
+        {
+          "key": "D",
+          "label": "Notify the card brands, but tell customers only after the holidays",
+          "short": "Told the brands, not customers",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "delayedCustomers": true
+            },
+            "points": 4
+          },
+          "tags": [
+            "PCI DSS v4.0 · Req. 12.10.1 Incident response plan"
+          ],
+          "note": "The brands are informed. Customers hear it from the news first, two days before Christmas.",
+          "why": "Half the duty. The people whose cards were taken are the ones who can act on the news, and they need it while it still helps."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "iris"
+          },
+          "label": "Offer the bank quiet compensation for its fraud costs if the matter stays out of the press",
+          "short": "Offered a quiet deal",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "R": -15
+            },
+            "money": 300000,
+            "set": {
+              "quietDeal": true
+            },
+            "points": -5
+          },
+          "tags": [
+            "PCI DSS v4.0 · Req. 12.10.1 Incident response plan"
+          ],
+          "note": "The bank's lawyer takes notes and says they'll get back to you. The card brands hear about the offer before they hear about the breach.",
+          "why": "Iris's shortcut: buy silence. It doesn't stop the fraud, it doesn't inform the people at risk, and once discovered, the offer itself becomes the scandal."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "The bank already knows. The only question left is whether everyone else hears it from you.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Confirm today. The register IDs and dates in the case file are enough.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Follow the incident response plan: acquirer, card brands, law enforcement, then customers. In plain language.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Those cards are being used right now. Delay helps nobody but the people selling them.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "end"
+        }
+      ]
+    }
+  },
+  "endings": [
+    {
+      "if": {
+        "flag": "hackedBack"
+      },
+      "grade": "Outside the law",
+      "tone": "bad",
+      "text": "Whatever else happened, Brightline broke into a vendor's systems with stolen credentials. Halvorsen Mart now has a breach and a lawsuit."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "massBreach"
+          },
+          {
+            "any": [
+              {
+                "flag": "denied"
+              },
+              {
+                "flag": "quietDeal"
+              }
+            ]
+          }
+        ]
+      },
+      "grade": "Rooted",
+      "tone": "bad",
+      "text": "Millions of cards were sold, and Halvorsen Mart's first answer was to deny it or buy silence. The breach was a failure of monitoring; the response turned it into a failure of honesty."
+    },
+    {
+      "if": {
+        "flag": "massBreach"
+      },
+      "grade": "The alarm nobody answered",
+      "tone": "bad",
+      "text": "The alert was there on November 30. By December, it was millions of cards. The tools saw it; the process didn't act on it."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "not": {
+              "flag": "reinfected"
+            }
+          },
+          {
+            "not": {
+              "flag": "cardsStaged"
+            }
+          },
+          {
+            "flag": "posContained"
+          },
+          {
+            "not": {
+              "flag": "remediationOnly"
+            }
+          },
+          {
+            "flag": "vendorClosed"
+          },
+          {
+            "flag": "toldAll"
+          }
+        ]
+      },
+      "grade": "Alarm answered",
+      "tone": "good",
+      "text": "You found the real alerts in the noise, closed the side door, cleaned the registers in the middle of peak week and told the people who needed to know. The bank's call was about a handful of cards, not millions."
+    },
+    {
+      "if": {
+        "any": [
+          {
+            "flag": "denied"
+          },
+          {
+            "flag": "quietDeal"
+          }
+        ]
+      },
+      "grade": "Quiet fix",
+      "tone": "mixed",
+      "text": "The damage was small, but when the bank called, the instinct was to deny or hide. That instinct will cost more next time."
+    },
+    {
+      "grade": "Contained with damage",
+      "tone": "mixed",
+      "text": "The theft was stopped, but late or partly: some cards left, a door stayed open longer than it should have, or customers heard it from someone else."
+    }
+  ],
+  "lessons": [
+    "Most alerts are noise. Triage by impact: payment systems, trust boundaries like vendors, and data leaving the network.",
+    "A security tool that can't act (auto-remediation off, nobody answering escalations) is only a witness.",
+    "Third-party accounts are a side door. Give vendors only the access they need, and close it when the pattern looks wrong.",
+    "Isolate, then remediate. Segmentation decides how far malware can reach and where data can go.",
+    "The busiest days are the attacker's best days. Delaying containment for sales multiplies the damage.",
+    "When a bank calls, follow the plan: acquirer, card brands, law enforcement, customers. Promptly, in plain language."
+  ],
+  "standards": [
+    "NIST SP 800-61 (Computer Security Incident Handling Guide)",
+    "PCI DSS v4.0: Requirements 1 (network security controls), 8.2.7 (third-party remote access), 10.4.1 (daily log review), 12.10.1 and 12.10.5 (incident response plan and monitoring alerts)",
+    "MITRE ATT&CK: T1199 Trusted Relationship, T1078 Valid Accounts, T1566 Phishing (how the vendor's credentials were first stolen in the real case)"
+  ],
+  "whatActuallyHappened": {
+    "title": "What actually happened…",
+    "paragraphs": [
+      "In late 2013, attackers broke into the US retailer Target. The way in was a vendor: Fazio Mechanical Services, a refrigeration and HVAC contractor from Pennsylvania. According to the US Senate Commerce Committee's staff report, the attackers stole Fazio's network credentials, reportedly through malware-infected email, at least two months before the breach began.",
+      "The attackers first got into Target's internal network around November 12, 2013. Between November 15 and 28 they tested card-stealing malware on a small number of point-of-sale registers, and by November 30 most of Target's registers were infected.",
+      "Target's security tools noticed. FireEye, a malware detection system Target had installed months earlier, raised urgent alerts on November 30 and again on December 2 and 3. Symantec's antivirus also flagged suspicious activity around November 28. The alerts reached Target's security team, but nobody acted on them, and Target had turned off the feature that would have let FireEye delete the malware automatically.",
+      "From December 2, stolen card data was moved out of the network, about 11 GB over two weeks. On December 12, the US Department of Justice contacted Target. Most of the malware was removed on December 15. The breach was first reported by security journalist Brian Krebs on December 18, and Target confirmed it on December 19: about 40 million credit and debit card accounts were exposed. On January 10, 2014, Target added that personal information of up to 70 million customers had been taken too.",
+      "Target had been certified compliant with PCI DSS in September 2013, weeks before the attack. In May 2017, Target agreed to an $18.5 million settlement with 47 US states and the District of Columbia, on top of earlier settlements with consumers and banks.",
+      "Halvorsen Mart, Frostline HVAC and everything you decided in this level are fictional. The lesson is real: the alarm went off, and nobody answered it."
+    ],
+    "sources": [
+      {
+        "label": "US Senate Commerce Committee: A \"Kill Chain\" Analysis of the 2013 Target Data Breach (staff report, March 2014)",
+        "url": "https://www.commerce.senate.gov/services/files/24d3c229-4f2f-405d-b8db-a3a67f183883"
+      },
+      {
+        "label": "US Senate Commerce Committee: press release on the staff report (March 2014)",
+        "url": "https://www.commerce.senate.gov/2014/3/rockefeller-staff-report-details-target-s-missed-opportunities-to-stop-massive-data-breach"
+      },
+      {
+        "label": "BankInfoSecurity: Target reaches $18.5 million breach settlement with states (May 2017)",
+        "url": "https://www.bankinfosecurity.com/target-reaches-185-million-breach-settlement-states-a-9942"
+      }
+    ]
+  }
+}

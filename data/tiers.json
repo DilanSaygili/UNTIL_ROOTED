@@ -1,0 +1,12 @@
+{
+  "startTitle": "Script Rookie",
+  "titles": ["Script Rookie", "Greenhorn", "Cyber Cadet", "Cyber Scout", "Breach Breaker", "White Hat",
+             "Hack Hunter", "Zero-Day Seeker", "Defense Captain", "Net Weaver", "Defense Admiral", "Root Knight"],
+  "passPercent": 70,
+  "tiers": {
+    "beginner":     { "name": "Beginner",     "levels": [1, 2, 3],    "hat": "green",  "environment": "home",          "lighting": ["day", "twilight", "night"], "tips": false, "subtitle": "Detection & Analysis · Identity, phishing, home networks (Security+ Domains 1–2)" },
+    "intermediate": { "name": "Intermediate", "levels": [4, 5, 6],    "hat": "blue",   "environment": "office",        "lighting": ["day", "twilight", "night"], "tips": true,  "subtitle": "Containment · Web apps, third parties, ransomware (Domains 2–4)" },
+    "advanced":     { "name": "Advanced",     "levels": [7, 8, 9],    "hat": "white",  "environment": "newyork",       "lighting": ["day", "twilight", "night"], "tips": true,  "subtitle": "Eradication & Recovery · Cloud, insiders, disclosure (Domains 3–5)" },
+    "master":       { "name": "Master",       "levels": [10, 11, 12], "hat": "purple", "environment": "underground",   "lighting": ["warm", "dusk", "dark"],      "tips": true,  "subtitle": "Post-Incident & Resilience · AI, wipers, critical infrastructure (all domains)" }
+  }
+}

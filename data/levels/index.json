@@ -1,0 +1,144 @@
+{
+  "_comment": "Map list. 'ready' levels have a JSON file in this folder; the rest show on the map as 'in development'. Real-event levels say only that they are inspired by real events: real names appear only in 'What actually happened…'. The demo is a training drill opened with #demo; it is not on the map and saves nothing.",
+  "levels": [
+    {
+      "id": "01-phished",
+      "level": 1,
+      "title": "Phished at 09:02",
+      "tier": "beginner",
+      "lighting": "day",
+      "real": false,
+      "topic": "Phishing, session theft, email fraud",
+      "ready": true
+    },
+    {
+      "id": "02-botnet",
+      "level": 2,
+      "title": "Lights, Camera, Botnet",
+      "tier": "beginner",
+      "lighting": "twilight",
+      "real": false,
+      "topic": "Smart devices, default passwords, DDoS",
+      "ready": true
+    },
+    {
+      "id": "03-patient-zero",
+      "level": 3,
+      "title": "Patient Zero",
+      "tier": "beginner",
+      "lighting": "night",
+      "real": true,
+      "topic": "Privileged access, keyloggers, owning a mistake",
+      "ready": true
+    },
+    {
+      "id": "04-injection",
+      "level": 4,
+      "title": "Injection at Checkout",
+      "tier": "intermediate",
+      "lighting": "day",
+      "real": false,
+      "topic": "SQL injection, web skimming, PCI DSS",
+      "ready": true
+    },
+    {
+      "id": "05-alarm",
+      "level": 5,
+      "title": "The Alarm Nobody Answered",
+      "tier": "intermediate",
+      "lighting": "twilight",
+      "real": true,
+      "topic": "Vendor access, alert fatigue, POS malware",
+      "ready": true
+    },
+    {
+      "id": "06-long-weekend",
+      "level": 6,
+      "title": "Long Weekend",
+      "tier": "intermediate",
+      "lighting": "night",
+      "real": false,
+      "topic": "Supply chain, ransomware, backups",
+      "ready": true
+    },
+    {
+      "id": "07-keys-on-github",
+      "level": 7,
+      "title": "Keys on GitHub",
+      "tier": "advanced",
+      "lighting": "day",
+      "real": false,
+      "topic": "Leaked cloud keys, least privilege",
+      "ready": true
+    },
+    {
+      "id": "08-last-day",
+      "level": 8,
+      "title": "The Last Day",
+      "tier": "advanced",
+      "lighting": "twilight",
+      "real": false,
+      "topic": "Insider threat, DLP, chain of custody",
+      "ready": true
+    },
+    {
+      "id": "09-76-days",
+      "level": 9,
+      "title": "76 Days",
+      "tier": "advanced",
+      "lighting": "night",
+      "real": true,
+      "topic": "Patching, certificates, crisis communication",
+      "ready": true
+    },
+    {
+      "id": "10-helpful-machine",
+      "level": 10,
+      "title": "The Helpful Machine",
+      "tier": "master",
+      "lighting": "warm",
+      "real": false,
+      "topic": "AI security, prompt injection, deepfake voice",
+      "ready": true
+    },
+    {
+      "id": "11-last-copy",
+      "level": 11,
+      "title": "The Last Copy",
+      "tier": "master",
+      "lighting": "dusk",
+      "real": true,
+      "topic": "Wipers, offline backups, recovery order",
+      "ready": true
+    },
+    {
+      "id": "12-lights-out",
+      "level": 12,
+      "title": "Lights Out",
+      "tier": "master",
+      "lighting": "dark",
+      "real": true,
+      "topic": "ICS/SCADA, manual operation, national CERT",
+      "ready": true
+    }
+  ],
+  "bonus": {
+    "id": "bonus-quiet-guest",
+    "level": 13,
+    "title": "The Quiet Guest",
+    "tier": "bonus",
+    "real": true,
+    "topic": "Build pipeline compromise, a long threat hunt",
+    "ready": true,
+    "lighting": "warm"
+  },
+  "demo": {
+    "id": "demo-mechanics",
+    "level": 0,
+    "title": "Training Drill",
+    "tier": "master",
+    "real": false,
+    "topic": "Try Consult and \"None of these\"",
+    "ready": true
+  }
+}

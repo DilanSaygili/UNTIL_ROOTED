@@ -1,0 +1,844 @@
+{
+  "id": "06-long-weekend",
+  "level": 6,
+  "title": "Long Weekend",
+  "tier": "intermediate",
+  "lighting": "night",
+  "options": 4,
+  "real": null,
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": {
+    "clock": "00:15",
+    "node": "rmm"
+  },
+  "_clientsComment": "Service meters for the three clients (docx: their dashboards on one screen): how much of each client's business is running, 0-100. Display only; they do not change the score. TODO: author review of the numbers.",
+  "clients": [
+    {
+      "id": "dental",
+      "name": "Dental clinic",
+      "start": 20
+    },
+    {
+      "id": "bakery",
+      "name": "Bakery chain",
+      "start": 25
+    },
+    {
+      "id": "law",
+      "name": "Law firm",
+      "start": 15
+    }
+  ],
+  "alarmAt": "00:12",
+  "introChoice": {
+    "at": "Fri 17:30",
+    "prompt": "Friday, 17:30, before a four-day holiday weekend. Half the team has already left. One item is left on your Friday checklist: \"Test a restore from backup and confirm the offline copy.\" It takes about ninety minutes. The backup jobs have reported success every night this month.",
+    "choices": [
+      {
+        "label": "Run the restore test and take the backup copy offline before leaving",
+        "short": "Tested the backups, took a copy offline",
+        "effects": {
+          "set": {
+            "backupsTested": true
+          },
+          "setVar": {
+            "friday": "tested the backups"
+          }
+        },
+        "note": "You stay late. The test restore works, and a fresh copy goes onto a disk that is unplugged before you lock up at 19:00."
+      },
+      {
+        "label": "Leave early: the backup jobs have been green all month",
+        "short": "Left early, backups untested",
+        "effects": {
+          "setVar": {
+            "friday": "left early, backups untested"
+          }
+        },
+        "note": "You leave at 17:35. The backup dashboard is green, so the checklist item can wait until Tuesday."
+      }
+    ]
+  },
+  "briefing": "Brightline Security manages the IT of dozens of small businesses through one remote-management server: it installs updates and runs maintenance scripts on every client's computers. It is the start of a long holiday weekend, and the office is nearly empty.",
+  "attacker": {
+    "activeWhile": {
+      "not": {
+        "flag": "rmmOff"
+      }
+    },
+    "events": [
+      {
+        "at": 30,
+        "flag": "moreClients",
+        "meters": {
+          "A": -15,
+          "R": -10
+        },
+        "text": "Two more client sites go dark: a veterinary practice and a small accounting firm. Same renamed files, same quarantined script from the management server. Every minute it stays on, it reaches further.",
+        "log": "Sat RMM · Unscheduled script pushed to 2 more client sites from the management server [content quarantined]"
+      },
+      {
+        "at": 240,
+        "flag": "allClients",
+        "meters": {
+          "A": -20,
+          "R": -15
+        },
+        "penalty": 5,
+        "text": "By morning, eleven of Brightline's clients are encrypted. The management server that was meant to keep them safe delivered the attack to every one of them.",
+        "clients": {
+          "dental": -10,
+          "bakery": -10,
+          "law": -10
+        }
+      },
+      {
+        "onEnter": "clients",
+        "if": {
+          "not": {
+            "flag": "backupsTested"
+          }
+        },
+        "flag": "backupsGone",
+        "meters": {
+          "I": -20
+        },
+        "penalty": 10,
+        "because": [
+          "Friday checklist: {friday}"
+        ],
+        "text": "You open the backup console to start recovery. The nightly jobs did run, but nobody ever tested a restore, and the backup share was online, reachable from the same network. It is encrypted too.",
+        "log": "Backup console: last restore test — never · backup share online and encrypted",
+        "clients": {
+          "dental": -10,
+          "bakery": -10,
+          "law": -10
+        }
+      }
+    ]
+  },
+  "nodes": {
+    "rmm": {
+      "phase": "Detection & Analysis",
+      "title": "Three dashboards turn red",
+      "body": "{clock}, Saturday. Your phone won't stop. On the wall screen, three client dashboards have gone red within five minutes: a dental clinic, a bakery chain and a law firm. All three are managed through Brightline's remote-management server, and the vendor has just published an urgent advisory about it.",
+      "logs": [
+        {
+          "text": "Fri 23:41 Vendor advisory · Critical vulnerability in on-prem remote-management server · exploitation observed · vendor advises shutting servers down",
+          "type": "hi"
+        },
+        {
+          "text": "Sat 00:12 RMM · Unscheduled script pushed to 3 client sites from the management server [content quarantined]",
+          "type": "hi"
+        },
+        {
+          "text": "Sat 00:20 Dental clinic · Appointment system offline · files renamed with unknown extension",
+          "type": "hi"
+        },
+        {
+          "text": "Sat 00:22 Bakery chain · 14 registers locked",
+          "type": "hi"
+        },
+        {
+          "text": "Sat 00:25 Law firm · Case files encrypted",
+          "type": "hi"
+        }
+      ],
+      "notes": {
+        "iris": "Not a targeted hit on one client. Someone found the one tool that reaches everyone, on a holiday night. This is a ransomware crew going for volume.",
+        "echo": "Echo's extra clue: on the dental clinic's server, EDR shows the backup service stopped four minutes before the first files were renamed. Whatever this is, it goes after backups first.",
+        "moritz": "One management server with full control over every client is a single point of failure. Tonight it is the attacker's single point of success.",
+        "jayson": "If I owned that server, I'd keep pushing to the next client on the list while you read the advisory. It's not finished."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Shut down the management server now, as the vendor advises",
+          "short": "Shut down the management server",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "rmmOff": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "MITRE ATT&CK T1072 · Software Deployment Tools"
+          ],
+          "note": "The server goes dark. So does your view of every client's machines: no remote updates, no remote fixes. But nothing new is pushed from it either.",
+          "why": "When the delivery channel is the attack, cut the channel. Losing remote visibility hurts, but it's recoverable; every minute it stays up, more clients can be hit. The vendor's own advice is to shut it down.",
+          "whyDeep": "In MITRE ATT&CK, abusing a central management tool to run code on many machines is T1072, Software Deployment Tools; the initial access through the server's flaw is T1190. NIST SP 800-61 containment decisions weigh service availability against further damage; here the damage spreads with every push."
+        },
+        {
+          "key": "B",
+          "label": "Wait for the vendor to release a patch before doing anything",
+          "short": "Waited for the vendor's patch",
+          "effects": {
+            "minutes": 60,
+            "points": 0,
+            "clients": {
+              "dental": -10,
+              "bakery": -10,
+              "law": -10
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "You refresh the vendor's status page for an hour. The patch is \"expected within days\". The server stays on.",
+          "why": "A patch fixes the flaw for the future; it does nothing about an attacker using it right now. The advisory said to shut down, not to wait."
+        },
+        {
+          "key": "C",
+          "label": "Keep the server running, but switch off its scripting feature",
+          "short": "Disabled scripting only",
+          "effects": {
+            "minutes": 20,
+            "points": 3,
+            "clients": {
+              "dental": -5,
+              "bakery": -5,
+              "law": -5
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "Scripting is switched off in the settings. Twenty minutes later, a new push arrives anyway: the flaw lets the attacker change the settings back.",
+          "why": "Partial measures on a compromised system rely on that system obeying you. If the attacker controls the server, they control its settings too. The vendor advised a full shutdown for a reason."
+        },
+        {
+          "key": "D",
+          "label": "Disconnect only the three affected clients and keep managing the rest",
+          "short": "Cut off only the three clients",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "threeCut": true
+            },
+            "points": 4
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "The three clients are cut off. The other forty are still connected to a server the attacker controls.",
+          "why": "The three red dashboards are where the attack landed, not where it is. The server is the source; every client still connected to it is the next target."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "jayson"
+          },
+          "label": "Hack back: find the ransomware group's leak site and take it down",
+          "short": "Hacked back",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "R": -20
+            },
+            "set": {
+              "hackedBack": true
+            },
+            "points": -10,
+            "clients": {
+              "dental": -5,
+              "bakery": -5,
+              "law": -5
+            }
+          },
+          "tags": [
+            "Law · Unauthorised access"
+          ],
+          "note": "Thirty minutes later you have achieved nothing except an entry in Brightline's firewall logs that will need explaining. The management server is still on.",
+          "why": "Attacking someone else's systems is illegal in most countries, for example under the UK Computer Misuse Act and the US Computer Fraud and Abuse Act, whoever they are. And it does nothing to stop the spread: your own server is the problem."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "They picked a holiday night and a tool that reaches everyone. Cut the tool before you think about anything else.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Every push comes from our own server. Turn off the source, then look at the damage.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "The vendor gave you the containment step already. Follow it, and accept the blindness for a few hours.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Whatever is next on their list is being hit while you decide. Pull the plug.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "team"
+        }
+      ]
+    },
+    "team": {
+      "phase": "Containment",
+      "title": "Half the team",
+      "body": [
+        {
+          "if": {
+            "flag": "moreClients"
+          },
+          "text": "{clock}. Five clients are now down, and it's 1 a.m. on a holiday weekend. You are one person. Half the team is away, the other half asleep. Who do you call?"
+        },
+        {
+          "text": "{clock}. Three clients down, and it's 1 a.m. on a holiday weekend. You are one person. Half the team is away, the other half asleep. Who do you call?"
+        }
+      ],
+      "notes": {
+        "iris": "Nobody wins a three-client ransomware weekend alone. Pride is a luxury tonight.",
+        "echo": "I'd rather work alone. I know. Tonight that's the wrong instinct.",
+        "moritz": "You need two kinds of people: someone who can rebuild systems, and someone who can talk to the clients so you don't have to.",
+        "jayson": "The clients will start calling at seven. Someone needs to answer who isn't also restoring servers."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Call the on-call recovery engineer and the client account manager",
+          "short": "Called recovery and client contact",
+          "effects": {
+            "minutes": 20,
+            "set": {
+              "teamUp": true
+            },
+            "points": 10,
+            "clients": {
+              "dental": 5,
+              "bakery": 5,
+              "law": 5
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Preparation",
+            "Incident roles"
+          ],
+          "note": "Both pick up. The recovery engineer is on the way; the account manager starts drafting what to tell each client in the morning.",
+          "why": "An incident needs defined roles: someone restores, someone communicates, someone coordinates. Calling the right two people beats calling everyone or no one.",
+          "whyDeep": "NIST SP 800-61 puts staffing and on-call roles under Preparation. ISO/IEC 27035 likewise expects an incident response team with defined responsibilities, including communication with affected parties."
+        },
+        {
+          "key": "B",
+          "label": "Call the whole team back from the holiday",
+          "short": "Recalled the whole team",
+          "effects": {
+            "minutes": 45,
+            "set": {
+              "teamUp": true,
+              "everyone": true
+            },
+            "points": 5,
+            "clients": {
+              "dental": 5,
+              "bakery": 5,
+              "law": 5
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Preparation"
+          ],
+          "note": "Eight people arrive over the next hours, tired and annoyed. By Sunday nobody has slept, and there is no one fresh for Monday.",
+          "why": "More people isn't always more help. Recovery can take days; burning out the whole team on night one leaves nobody for the long tail."
+        },
+        {
+          "key": "C",
+          "label": "Handle it alone until the team is back on Tuesday",
+          "short": "Handled it alone",
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "alone": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "NIST SP 800-61 · Preparation"
+          ],
+          "note": "You make coffee. It's going to be a long four days, and the clients' phones are ringing into your voicemail.",
+          "why": "One person can't restore three clients, coordinate with lawyers and answer the phones. Escalation paths exist so that no one has to."
+        },
+        {
+          "key": "D",
+          "label": "Call only Brightline's CEO",
+          "short": "Called only the CEO",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "ceoOnly": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Preparation"
+          ],
+          "note": "The CEO is informed and supportive, and can't restore a single server.",
+          "why": "Leadership should know, but informing management doesn't add hands. You need the people who can do the work."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Call the people who make you faster, not the ones who make you feel covered.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Someone to rebuild, someone to talk. Leave the rest asleep for the next shift.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Roles before headcount: recovery and client communication.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Two calls, not ten. And one of them should be someone who can talk to clients.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "clients"
+        }
+      ]
+    },
+    "clients": {
+      "phase": "Recovery",
+      "title": "Who first?",
+      "body": [
+        {
+          "if": {
+            "flag": "backupsGone"
+          },
+          "text": "{clock}. Recovery starts, and it starts badly: there is no clean backup to restore from. Rebuilding by hand is slow. The dental clinic has patients from 08:00, the bakery chain wants its 14 registers for the holiday rush, and the law firm has court deadlines. Where does recovery start?"
+        },
+        {
+          "text": "{clock}. Recovery starts, and the backups you checked on Friday are clean and offline. The dental clinic has patients from 08:00, the bakery chain wants its 14 registers for the holiday rush, and the law firm has court deadlines. Where does recovery start?"
+        }
+      ],
+      "notes": {
+        "iris": "Everyone will say they're the priority. The contracts and the risk to people decide, not who shouts loudest.",
+        "echo": "The dental server holds patient records. If anything left the network, that's the data with the strictest rules.",
+        "moritz": "This should have been decided months ago, in each client's recovery plan. Read it before you improvise.",
+        "jayson": "The bakery will call first and loudest. That doesn't make it the most important."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Follow each client's agreed recovery priorities: patient care first, then confidential case files, then the registers",
+          "short": "Recovery by agreed priorities",
+          "effects": {
+            "minutes": 60,
+            "set": {
+              "planFollowed": true
+            },
+            "points": 10,
+            "clients": {
+              "dental": 50,
+              "bakery": 40,
+              "law": 35
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Recovery",
+            "ISO/IEC 27031 · Business continuity",
+            "GDPR Art. 33 · 72-hour notification"
+          ],
+          "note": [
+            {
+              "if": {
+                "flag": "teamUp"
+              },
+              "text": "The recovery engineer takes the clinic, you take the law firm, and the bakery's registers come back by afternoon. The account manager has already told each client what to expect, and the clinic's notification to the data protection authority is drafted within the 72 hours."
+            },
+            {
+              "text": "Working through the plan alone takes time: the clinic is back by mid-morning, the law firm by evening, the bakery tomorrow. Each client hears about it only when you reach them."
+            }
+          ],
+          "why": "Recovery priorities belong in a plan agreed before the incident: what each client can tolerate, and where people or sensitive data are at risk. Patient care and health data come first; health data also triggers the GDPR's 72-hour notification to the authority if it may have been exposed."
+        },
+        {
+          "key": "B",
+          "label": "The bakery chain: 14 registers are the most money lost per hour",
+          "short": "Bakery first",
+          "effects": {
+            "minutes": 60,
+            "meters": {
+              "R": -5
+            },
+            "points": 4,
+            "clients": {
+              "dental": 20,
+              "bakery": 60,
+              "law": 20
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Recovery"
+          ],
+          "note": "The registers are back by morning. The dental clinic sends patients home at 08:30.",
+          "why": "Revenue matters, but it isn't the only measure. Patients can't be seen without the appointment system, and health records carry legal duties that registers don't."
+        },
+        {
+          "key": "C",
+          "label": "The law firm: its partners are already calling",
+          "short": "Law firm first, because they called",
+          "effects": {
+            "minutes": 60,
+            "meters": {
+              "R": -5
+            },
+            "points": 4,
+            "clients": {
+              "dental": 20,
+              "bakery": 20,
+              "law": 60
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Recovery"
+          ],
+          "note": "The partners are satisfied. The clinic and the bakery hear nothing until noon.",
+          "why": "Confidential case files do matter, but choosing by who calls loudest isn't triage. Priorities should come from impact and agreements, not volume."
+        },
+        {
+          "key": "D",
+          "label": "Restore all three at the same pace, a bit at a time",
+          "short": "All three at once, evenly",
+          "effects": {
+            "minutes": 90,
+            "meters": {
+              "A": -10
+            },
+            "points": 3,
+            "clients": {
+              "dental": 30,
+              "bakery": 30,
+              "law": 30
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Recovery"
+          ],
+          "note": "By midday, all three are half-restored and none of them can work.",
+          "why": "Spreading effort evenly sounds fair, but half-restored systems deliver nothing. Finish the highest priority first, then the next."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Patients first. Then the data that ends careers if it leaks. Then the cash registers.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Look at what data each client holds. Health records come with legal deadlines.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Each client's continuity plan already ranks this. Follow it, and if it doesn't exist, that's the first lesson.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Don't let the loudest client set the order. Decide, then call them all.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "ransom"
+        }
+      ]
+    },
+    "ransom": {
+      "clockAt": "08:30",
+      "phase": "Recovery",
+      "title": "The law firm wants to pay",
+      "body": [
+        {
+          "if": {
+            "flag": "backupsGone"
+          },
+          "text": "{clock}. The law firm's managing partner has read the ransom message and made up their mind: \"We pay. Today. Without backups we have no choice.\" They want Brightline to handle it."
+        },
+        {
+          "text": "{clock}. The law firm's managing partner has read the ransom message: \"I don't care that you have backups. They say they've stolen our files. We pay, today.\" They want Brightline to handle it."
+        }
+      ],
+      "logs": [
+        {
+          "text": "Analyst: ransom message demands cryptocurrency within 72 h · wallet [REDACTED] · group claims data theft (unverified)",
+          "type": "warn"
+        },
+        {
+          "text": "Counsel: before any payment, check sanctions lists and notify authorities; payment does not guarantee recovery.",
+          "type": "info"
+        }
+      ],
+      "notes": {
+        "iris": "I've sat across from these people. Their first number is never their last, and their word is worth exactly what you can verify.",
+        "echo": "The theft claim is unverified. The firewall logs from last night will tell you whether anything large actually left.",
+        "moritz": "This is a legal and business decision, with technical facts as input. Get counsel in the room before anyone touches a wallet.",
+        "jayson": "If I were them, the 72-hour clock is the whole point. Pressure makes people skip the checks."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "No decision before the checks: counsel, sanctions screening and law enforcement first, recovery from backups meanwhile",
+          "short": "Legal checks before any decision",
+          "effects": {
+            "minutes": 60,
+            "set": {
+              "legalCheck": true
+            },
+            "points": 10,
+            "clients": {
+              "law": 10
+            }
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz explains the sanctions issue in network terms; the partners hear a lecture. Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "OFAC advisory on ransomware payments (2021)",
+            "CISA #StopRansomware Guide",
+            "MITRE ATT&CK T1486 · Data Encrypted for Impact"
+          ],
+          "note": [
+            {
+              "if": {
+                "flag": "backupsGone"
+              },
+              "text": "Counsel joins the call. The group's wallet is screened, police are informed, and the firm's insurer is brought in. Whatever the firm decides now, it decides lawfully and with eyes open; meanwhile you rebuild what you can without backups."
+            },
+            {
+              "text": "Counsel joins the call. The group's wallet is screened, police are informed, and the firm's files come back from the offline backup by evening. The firewall logs show no large transfer: the theft claim was a bluff. Nobody pays."
+            }
+          ],
+          "why": "Paying a ransom can be illegal if the recipient is sanctioned, and it never guarantees decryption or deletion of stolen data. The decision belongs to the client with counsel, after sanctions checks and reporting to authorities. Restoring from backups is the best answer of all.",
+          "whyDeep": "The US Treasury's OFAC 2021 advisory warns that facilitating ransomware payments to sanctioned persons can violate sanctions regulations, and encourages reporting to law enforcement. CISA's #StopRansomware Guide recommends offline, encrypted backups that are regularly tested for exactly this moment."
+        },
+        {
+          "key": "B",
+          "label": "Pay quickly to get the files back",
+          "short": "Paid quickly",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "R": -10
+            },
+            "money": 180000,
+            "set": {
+              "paid": true
+            },
+            "points": 0,
+            "clients": {
+              "law": 5
+            }
+          },
+          "tags": [
+            "OFAC advisory on ransomware payments (2021)",
+            "MITRE ATT&CK T1486 · Data Encrypted for Impact"
+          ],
+          "note": "The payment goes out. The decryption tool arrives two days later, restores most files and corrupts some. A month later the group asks for more.",
+          "why": "Paying without checks risks breaking sanctions law, funds the next attack, marks you as a payer, and doesn't guarantee recovery. It was skipped, not decided."
+        },
+        {
+          "key": "C",
+          "label": "Refuse flatly and tell the firm to start from scratch",
+          "short": "Refused flatly",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "refused": true
+            },
+            "points": 4
+          },
+          "tags": [
+            "NIST SP 800-61 · Recovery"
+          ],
+          "note": "The partner hangs up, then calls Brightline's CEO. The decision wasn't yours to make.",
+          "why": "Not paying is often the right outcome, but the decision is the client's, made with counsel and the facts. A security firm advises; it doesn't overrule."
+        },
+        {
+          "key": "D",
+          "label": "Let the firm pay quietly through a broker and tell no one",
+          "short": "Quiet payment, no reporting",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "R": -15
+            },
+            "money": 180000,
+            "set": {
+              "paidSecret": true
+            },
+            "points": -5,
+            "clients": {
+              "law": 5
+            }
+          },
+          "tags": [
+            "OFAC advisory on ransomware payments (2021)"
+          ],
+          "note": "The broker handles it. Nobody screened the wallet, nobody told the police, and the firm's client data is still in the group's hands.",
+          "why": "Secrecy adds legal risk on top of the payment's own risks. Authorities can't help, sanctions aren't checked, and affected people aren't told their data may be exposed."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "iris"
+          },
+          "label": "Negotiate for time and a proof of decryption, without committing to pay, while counsel runs the checks",
+          "short": "Negotiated for time",
+          "effects": {
+            "minutes": 60,
+            "set": {
+              "negotiated": true,
+              "legalCheck": true
+            },
+            "points": 9,
+            "clients": {
+              "law": 10
+            }
+          },
+          "tags": [
+            "OFAC advisory on ransomware payments (2021)",
+            "CISA #StopRansomware Guide"
+          ],
+          "note": "Iris buys four extra days and gets the group to prove what it holds. The proof shows they hold almost nothing. Counsel clears the way for the firm to walk away.",
+          "why": "Iris's ability: professional negotiation can buy time and verify claims without committing to pay. It works only alongside counsel and law enforcement, never instead of them."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Their deadline is a tactic. Buy time, verify the claim, and never let them set your process.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Check last night's firewall logs before anyone believes the theft claim.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Counsel, sanctions screening and law enforcement first. Technical facts second. Money last, if ever.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "They want you rushed. A decision made in 72 hours under pressure is the one they planned for you.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "end"
+        }
+      ]
+    }
+  },
+  "endings": [
+    {
+      "if": {
+        "flag": "hackedBack"
+      },
+      "grade": "Outside the law",
+      "tone": "bad",
+      "text": "While your own server kept spreading ransomware, you went after the criminals' systems. Now Brightline has a ransomware incident and a legal one."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "backupsGone"
+          },
+          {
+            "any": [
+              {
+                "flag": "paid"
+              },
+              {
+                "flag": "paidSecret"
+              }
+            ]
+          }
+        ]
+      },
+      "grade": "Rooted",
+      "tone": "bad",
+      "text": "No working backups, a ransom paid without checks, and a criminal group that now knows Brightline's clients pay. The long weekend will be a long year."
+    },
+    {
+      "if": {
+        "flag": "paidSecret"
+      },
+      "grade": "Paid in the dark",
+      "tone": "bad",
+      "text": "The files came back, mostly. The payment was never screened or reported, and the stolen data is still out there. This one isn't over."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "rmmOff"
+          },
+          {
+            "not": {
+              "flag": "moreClients"
+            }
+          },
+          {
+            "not": {
+              "flag": "backupsGone"
+            }
+          },
+          {
+            "flag": "legalCheck"
+          },
+          {
+            "flag": "teamUp"
+          }
+        ]
+      },
+      "grade": "Back by Tuesday",
+      "tone": "good",
+      "text": "The management server went dark within minutes, the right people answered the phone, the offline backups worked, and nobody paid. By Tuesday morning, all three clients were open for business."
+    },
+    {
+      "if": {
+        "flag": "backupsGone"
+      },
+      "grade": "The untested backup",
+      "tone": "mixed",
+      "text": "The response was sound, but recovery wasn't: the backups that \"ran fine every night\" were online and encrypted with everything else. Ninety minutes on Friday would have saved four days."
+    },
+    {
+      "grade": "Contained with damage",
+      "tone": "mixed",
+      "text": "The clients were recovered, but slower or wider than they had to be: more clients hit, the wrong order, or a team stretched too thin."
+    }
+  ],
+  "lessons": [
+    "A remote-management tool that reaches every client is a supply-chain risk. When it is the attack channel, shut it down.",
+    "Backups only count if they are tested and kept offline. Untested, online backups are encrypted with everything else.",
+    "Incidents need defined roles: someone restores, someone communicates. Call the right people, not everyone or no one.",
+    "Recovery priorities belong in a plan agreed before the incident: people and sensitive data first.",
+    "Ransom is a legal and business decision: counsel, sanctions screening and law enforcement before anything else. Paying never guarantees recovery."
+  ],
+  "standards": [
+    "NIST SP 800-61 (Computer Security Incident Handling Guide)",
+    "CISA #StopRansomware Guide (offline, encrypted, tested backups)",
+    "US Treasury OFAC: Updated Advisory on Potential Sanctions Risks for Facilitating Ransomware Payments (September 2021)",
+    "ISO/IEC 27031 (ICT readiness for business continuity) and ISO/IEC 27035 (incident management)",
+    "GDPR Article 33 (72-hour breach notification)",
+    "MITRE ATT&CK: T1190 Exploit Public-Facing Application, T1072 Software Deployment Tools, T1486 Data Encrypted for Impact"
+  ],
+  "whatActuallyHappened": null
+}

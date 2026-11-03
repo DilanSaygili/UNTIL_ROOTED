@@ -1,0 +1,165 @@
+{
+  "id": "demo-mechanics",
+  "level": 0,
+  "title": "Training Drill",
+  "tier": "master",
+  "lighting": "warm",
+  "options": 4,
+  "demo": true,
+  "real": null,
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": { "clock": "21:00", "node": "call" },
+  "introChoice": null,
+  "briefing": "A short training drill to try the Master-tier tools: one Consult (tip token) and the \"None of these\" option. The drill gives you a free tip token, and nothing here is saved to your progress.",
+  "attacker": null,
+  "nodes": {
+    "call": {
+      "phase": "Detection & Analysis",
+      "title": "The urgent call",
+      "body": "The help desk forwards a call. A voice that sounds exactly like the CFO says she is locked out minutes before a board meeting. She orders you to switch off MFA on her account for one hour.",
+      "logs": [
+        { "text": "21:00 HELPDESK inbound call transferred caller_id=withheld", "type": "warn" },
+        { "text": "21:00 IDP cfo.account: no failed sign-ins in the last 24h", "type": "info" }
+      ],
+      "choices": [
+        {
+          "key": "A",
+          "label": "Switch off MFA for one hour. She is the CFO and the meeting is about to start",
+          "short": "Switched off MFA",
+          "effects": { "meters": { "C": -20 }, "set": { "fooled": true }, "points": 0 },
+          "tags": ["Social engineering · Vishing"],
+          "note": "MFA is off. Four minutes later someone signs in to the CFO's mailbox from an unknown device.",
+          "why": "Authority plus urgency is the oldest pressure trick in social engineering. A familiar voice proves nothing: voices can be imitated or cloned. Security controls are never removed on the strength of an inbound call."
+        },
+        {
+          "key": "B",
+          "label": "Reset her MFA and read the new setup code to her over the phone",
+          "short": "Read the code aloud",
+          "effects": { "meters": { "C": -15 }, "set": { "fooled": true }, "points": 1 },
+          "tags": ["Social engineering · Vishing"],
+          "note": "The caller registers their own device with the code you read out. The account now trusts the attacker's phone.",
+          "why": "Handing a setup code to an unverified caller gives them the second factor directly. The identity of the caller was never checked."
+        },
+        {
+          "key": "C",
+          "label": "Ask her two security questions, then switch off MFA",
+          "short": "Security questions",
+          "effects": { "meters": { "C": -10 }, "set": { "fooled": true }, "points": 3 },
+          "tags": ["Social engineering · Vishing"],
+          "note": "The caller answers both questions correctly. Mother's maiden name and first school are easy to find online.",
+          "why": "Knowledge-based questions are weak verification because the answers are often public or guessable. And even a verified user should not get MFA removed over the phone."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": { "set": { "verified": true }, "points": 10 },
+          "tags": ["NIST SP 800-61 · Detection & Analysis", "Social engineering · Out-of-band verification"],
+          "note": "You refuse all three. Two teammates lean over with their own ideas.",
+          "why": "All three options act on the caller's word. When every option skips verification, the right call is to reject them and verify through a channel you control."
+        }
+      ],
+      "noneSuggestions": [
+        { "by": "jayson", "text": "Hang up and call her back on the number in the company directory. If it's really her, she'll pick up.", "short": "Called back on the directory number", "correct": true },
+        { "by": "moritz", "text": "Keep MFA on and send her through the documented identity-verification process. No exceptions for rank.", "short": "Used the verification process", "correct": true },
+        { "by": "iris", "text": "Keep her talking and record the call. If she's fake, the recording might tell us who she is.", "short": "Kept the caller talking", "correct": false },
+        { "by": "echo", "text": "Stay on the line and pull her sign-in logs while she waits. The logs will tell us if it's her.", "short": "Checked logs during the call", "correct": false }
+      ],
+      "consult": {
+        "iris": { "hint": "Whoever is on that line wants one thing: a door you leave open. A real CFO can survive five minutes of process.", "misleading": false },
+        "echo": { "hint": "Voices are easy to clone now. Don't trust the line. Trust a channel you chose yourself.", "misleading": false },
+        "moritz": { "hint": "The process exists so nobody has to judge a voice. If every option skips the process, none of them is right.", "misleading": false },
+        "jayson": { "hint": "Authority plus urgency. That's a pretext I'd use myself. Never act on an inbound call.", "misleading": false }
+      },
+      "next": [{ "to": "after" }]
+    },
+    "after": {
+      "phase": "Post-Incident Activity",
+      "title": "It wasn't her",
+      "body": [
+        { "if": { "flag": "verified" }, "text": "The real CFO answers on her directory number. She is in the board meeting and never called anyone. The help desk asks what to do now." },
+        { "text": "The real CFO calls from the boardroom: she never phoned the help desk. Her account is already being used. The help desk asks what to do now." }
+      ],
+      "logs": [
+        { "if": { "flag": "fooled" }, "text": "21:06 SIGNIN ok user=cfo.account device=unknown geo=unknown", "type": "hi" }
+      ],
+      "choices": [
+        {
+          "key": "A",
+          "label": [
+            { "if": { "flag": "fooled" }, "text": "Revoke her sessions, restore MFA, log the incident and warn the help desk team about the caller" },
+            { "text": "Log the attempt, warn the help desk team about the caller and share it with the security team" }
+          ],
+          "short": "Logged and warned the team",
+          "effects": { "set": { "reported": true }, "points": 10 },
+          "tags": ["NIST SP 800-61 · Post-Incident Activity"],
+          "note": "The help desk gets a short warning with the caller's script. Two days later the same caller tries another agent, who hangs up.",
+          "why": "Failed attacks are still incidents. Recording and sharing them helps the team spot the next attempt, and the pattern may match other reports."
+        },
+        {
+          "key": "B",
+          "label": "Do nothing. No damage was done, or it can wait until Monday",
+          "short": "Did nothing",
+          "effects": { "points": 2 },
+          "tags": ["NIST SP 800-61 · Post-Incident Activity"],
+          "note": "Nobody else hears about the call. The caller tries again next week with a better story.",
+          "why": "An unreported attempt teaches the attacker more than it teaches the defenders. Lessons learned only exist if someone writes them down."
+        },
+        {
+          "key": "C",
+          "label": "Post the caller's withheld number and voice recording on social media to warn others",
+          "short": "Posted it publicly",
+          "effects": { "meters": { "R": -10 }, "points": 1 },
+          "tags": ["Incident communication"],
+          "note": "The post goes viral for the wrong reasons. Legal asks why internal incident details are public.",
+          "why": "Incident details are shared through agreed channels (security team, management, and if needed CERT or police), not posted publicly by an individual analyst."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": { "points": 2 },
+          "tags": ["NIST SP 800-61 · Post-Incident Activity"],
+          "note": "You reject all three and wait for a better idea. Logging and warning the team was the right call here, so the extra hesitation costs you.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option followed good practice, so rejecting it costs extra points."
+        }
+      ],
+      "noneSuggestions": [
+        { "by": "moritz", "text": "Write it up and brief the help desk.", "short": "Wrote it up", "correct": true },
+        { "by": "jayson", "text": "Warn the help desk now; paperwork later.", "short": "Warned the help desk", "correct": true },
+        { "by": "echo", "text": "Keep it to ourselves until we know more.", "short": "Kept it quiet", "correct": false }
+      ],
+      "consult": {
+        "iris": { "hint": "Nothing happened, so there is nothing to report. Paperwork only slows a good team down.", "misleading": true },
+        "echo": { "hint": "Write down the caller's exact words. Scripts repeat; that is how you recognise them next time.", "misleading": false },
+        "moritz": { "hint": "Post-incident activity is part of the process even when the attack failed. Record it and share it internally.", "misleading": false },
+        "jayson": { "hint": "Tell the help desk today. The same caller will try the next agent on shift.", "misleading": false }
+      },
+      "next": [{ "to": "end" }]
+    }
+  },
+  "endings": [
+    {
+      "if": { "flag": "fooled" },
+      "grade": "Fooled",
+      "tone": "bad",
+      "text": "A convincing voice got past the help desk. In Master levels, the right answer is sometimes none of the options on the screen."
+    },
+    {
+      "grade": "Drill passed",
+      "tone": "good",
+      "text": "You verified before you trusted. That habit is what the Master levels test."
+    }
+  ],
+  "lessons": [
+    "A familiar voice is not identity verification. Call back on a number you already have.",
+    "\"None of these\" is right only when every option on the screen is wrong.",
+    "In Master levels, a teammate's advice can be wrong. Know your team."
+  ],
+  "standards": [
+    "NIST SP 800-61 (Computer Security Incident Handling Guide)"
+  ],
+  "whatActuallyHappened": null
+}

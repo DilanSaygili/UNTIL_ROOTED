@@ -1,0 +1,75 @@
+{
+  "order": ["iris", "echo", "moritz", "jayson"],
+  "iris": {
+    "id": "UR-01", "first": "Iris", "full": "Iris Nora Thorne", "short": "Iris N. Thorne",
+    "hometown": "London, UK", "age": 34, "birthday": "9 September 1992", "sign": "Virgo",
+    "role": "Threat Intelligence Lead & Ransomware Negotiator",
+    "realWorld": "Threat Intelligence Lead, Ransomware Negotiator",
+    "tagline": "The one who sits at the same table as the attacker.",
+    "aura": "A sharp genius who knows the limits of systems by heart. Arrogant, but always right. Elegant.",
+    "personality": "Dominant and cool-headed; takes control of every room she walks into. She sees the detail nobody notices and knows how to use it. Dresses elegantly and expensively, and always seems to know what she will say before she says it. Her slight villain aura comes from speaking the same language as criminals. Her wealth comes from private consulting for large companies.",
+    "ability": "Reveals the attacker group and its likely goal early in an incident. Unlocks an extra negotiation option in extortion and ransom situations.",
+    "weakness": "Ethical shortcuts and arrogance. \"Results matter, not methods.\" She sometimes offers tempting, ethically grey shortcuts, such as paying a ransom quietly or delaying notification. They seem to work short-term, but cost Reputation and feed the butterfly chain.",
+    "highlights": [6, 8, 10],
+    "quote": "Don't ask me how secure a system is. Tell me who you're protecting it from, and I'll tell you why that's impossible.",
+    "look": { "skin": "#6e4532", "skinShade": "#55331f", "hair": "#1a1210", "hairStyle": "bun", "top": "#7a1f33", "topShade": "#5a1424", "accent": "#e3b341" },
+    "scenes": [
+      { "type": "phone", "caption": "London, 23:40. A ransom call. She sets the price." },
+      { "type": "skyline", "caption": "She already knows who they are. They don't know that yet." }
+    ]
+  },
+  "echo": {
+    "id": "UR-02", "first": "Echo", "full": "Echo Rune Vane", "short": "Echo R. Vane",
+    "hometown": "Bergen, Norway", "age": 19, "birthday": "2 November 2006", "sign": "Scorpio",
+    "role": "Network Traffic Analysis, Reverse Engineering & Forensics",
+    "realWorld": "Malware Analyst / Reverse Engineer, Digital Forensics Analyst",
+    "tagline": "Moves through network traffic like a whisper.",
+    "aura": "Invisible. She moves through network traffic like a whisper and holds secrets no one else can find. An artist of espionage.",
+    "personality": "Talks little, watches a lot. A true computer geek who can disappear in front of a screen for hours. Dresses comfortably: hoodie, joggers, leggings, crop top, in a style inspired by Tokyo street fashion and nightlife. She carries an agent's air: nobody quite knows where she came from or who she used to be. She lives modestly, but has a large, secret fortune.",
+    "ability": "Analyses malware to find a hidden clue the others cannot see, such as a kill switch that stops the attack. Evidence decays more slowly.",
+    "weakness": "A lone wolf who keeps information to herself. She does not share findings until they are perfect. With the attacker clock running, that silence can be expensive.",
+    "highlights": [3, 9, 11],
+    "quote": "Nothing in the digital world is ever truly deleted. It just hides where people stop looking. That's exactly where I live.",
+    "look": { "skin": "#f0d2bd", "skinShade": "#d4ae96", "hair": "#e9e4f2", "hairStyle": "bob", "top": "#1d1f29", "topShade": "#11121a", "accent": "#ff4fa3" },
+    "scenes": [
+      { "type": "hood", "caption": "Bergen, 03:12. The hood goes up. The world goes quiet." },
+      { "type": "typing", "caption": "Packet by packet. Nothing is ever truly deleted." }
+    ]
+  },
+  "moritz": {
+    "id": "UR-03", "first": "Moritz", "full": "Moritz Lennart Adler", "short": "Moritz L. Adler",
+    "hometown": "Berlin, Germany", "age": 27, "birthday": "6 August 1999", "sign": "Leo",
+    "role": "Security Architect & OT Security Engineer",
+    "realWorld": "Security Architect, OT Security Engineer",
+    "tagline": "Watches the big picture from above, like an eagle.",
+    "aura": "Logic-driven. He watches the big picture from above like an eagle. A cool Central-European mind.",
+    "personality": "Mature beyond his years, calm, with a strong presence. He speaks little, but when he speaks everyone goes quiet, which makes him charismatic. A true bookworm: there is always a world classic and a history or philosophy book on his desk. He avoids crowds and small talk and prefers to talk about the work. Knows NIST, ISO and IEC 62443 almost by heart.",
+    "ability": "Network segmentation slows the attacker's spread. Gives deeper, standards-based explanations in the \"Why?\" panels.",
+    "weakness": "Cannot communicate with non-technical people. He struggles to explain decisions to executives and the press, so stakeholder and Reputation meters drop faster with him.",
+    "highlights": [6, 11, 12],
+    "quote": "You use words to persuade people. I build systems that don't need persuading.",
+    "look": { "skin": "#e8c3a4", "skinShade": "#c9a083", "hair": "#5b3a22", "hairStyle": "short", "beard": true, "top": "#25324a", "topShade": "#18223a", "accent": "#9aa7b5" },
+    "scenes": [
+      { "type": "book", "caption": "Berlin, 06:00. A history book before the first alert." },
+      { "type": "diagram", "caption": "Zones and conduits. He draws the walls before anyone attacks them." }
+    ]
+  },
+  "jayson": {
+    "id": "UR-04", "first": "Jayson", "full": "Jayson Miles Frost", "short": "Jayson M. Frost",
+    "hometown": "Detroit, USA", "age": 22, "birthday": "28 January 2004", "sign": "Aquarius",
+    "role": "Penetration Tester (authorized) & Social Engineering",
+    "realWorld": "Penetration Tester",
+    "tagline": "Hacks human psychology beyond code.",
+    "aura": "Hacks human psychology beyond code. Charismatic, dynamic, gets things done in the field. A dangerous professional.",
+    "personality": "The classic movie hacker: types fast, watches three screens at once, headphones never off. But very social: handsome, funny, gets along with everyone. Athletic; no day starts without a morning run or basketball. His social intelligence lets him understand social engineering better than anyone, and people open up to him. The team's defender who thinks like an attacker, a purple-team approach.",
+    "ability": "Predicts the attacker's next move and gives a hint. Can automate one action per level to save time.",
+    "weakness": "Overconfident and hasty; sometimes acts without permission or documentation. The biggest danger: he wants to \"hack back\". That is illegal in real life, and accepting it brings legal and reputational penalties.",
+    "highlights": [2, 5, 7],
+    "quote": "The easiest way through a firewall? Buy a coffee for the person who knows the password. People are the weakest link.",
+    "look": { "skin": "#5c3a26", "skinShade": "#462a1a", "hair": "#120c0a", "hairStyle": "fade", "top": "#c23b2e", "topShade": "#962a20", "accent": "#f2f2f2", "headphones": true },
+    "scenes": [
+      { "type": "basketball", "caption": "Detroit, 06:30. Forty free throws before the first email." },
+      { "type": "screens", "caption": "Three screens. One coffee. Thinking like the attacker." }
+    ]
+  }
+}

@@ -1,0 +1,1101 @@
+{
+  "id": "12-lights-out",
+  "level": 12,
+  "title": "Lights Out",
+  "tier": "master",
+  "lighting": "dark",
+  "options": 4,
+  "real": {
+    "dates": "23 December 2015"
+  },
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": {
+    "clock": "10:12",
+    "node": "email"
+  },
+  "alarmAt": "16:31",
+  "introChoice": null,
+  "briefing": "Eastvale Grid keeps the lights on for a quarter of a million homes. It's a winter evening two days before the holidays, and the control centre is on a skeleton crew. But this story starts months earlier, in spring, with an email.",
+  "attacker": {
+    "activeWhile": {
+      "not": {
+        "flag": "remoteStopped"
+      }
+    },
+    "events": [
+      {
+        "onEnter": "cursor",
+        "if": {
+          "flag": "macroEnabled"
+        },
+        "flag": "yourFoothold",
+        "meters": {
+          "C": -10
+        },
+        "penalty": 5,
+        "because": [
+          "Spring: the attachment's content was enabled on a company laptop"
+        ],
+        "text": "The forensic timeline will later show where tonight began: the laptop where the spring attachment was opened. From there the attackers spent months collecting passwords, including the ones for the control network's remote access."
+      },
+      {
+        "at": 10,
+        "flag": "moreBreakers",
+        "meters": {
+          "A": -20
+        },
+        "penalty": 5,
+        "text": "The remote session keeps working through the substation list. Breaker after breaker opens, and whole districts go dark in the snow."
+      },
+      {
+        "at": 25,
+        "flag": "firmwareGone",
+        "meters": {
+          "A": -10,
+          "I": -15
+        },
+        "penalty": 20,
+        "text": "Before leaving, the attackers overwrite the firmware on the communication devices at a dozen substations. Even after tonight, those substations can only be run by hand, with crews on site, for weeks."
+      },
+      {
+        "onEnter": "public",
+        "if": {
+          "gte": [
+            "clock",
+            1015
+          ]
+        },
+        "flag": "controlDark",
+        "meters": {
+          "A": -10
+        },
+        "penalty": 5,
+        "because": [
+          "The remote change to the backup power schedule wasn't found before 16:55"
+        ],
+        "text": "At 16:55 the control centre's backup power switches off, exactly as the altered schedule says. Operators finish the night by torchlight, on paper."
+      }
+    ]
+  },
+  "nodes": {
+    "email": {
+      "act": "Prologue · Spring",
+      "phase": "Detection & Analysis",
+      "title": "An email from the ministry",
+      "lights": 0,
+      "body": "{clock}. You're covering IT support for the morning. An engineer forwards you an email: \"From the Ministry of Energy, about new grid regulations. The document says I have to enable content to read it. Is that OK?\"",
+      "logs": [
+        {
+          "text": "Spring | Email | Attachment from \"Ministry of Energy\" (spoofed) · macro prompt shown to user",
+          "type": "warn"
+        }
+      ],
+      "notes": {
+        "iris": "A government email that needs macros to show a PDF's worth of text? Somebody wants a door, not a reader.",
+        "echo": "Echo's extra clue: the sender's address is one letter off the ministry's real domain.",
+        "moritz": "Documents from outside should never need macros to be read. Report it; that's what the process is for.",
+        "jayson": "An official-looking document, a reason to click, and a button that runs my code. That's the oldest trick I know."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Tell him not to open it, report it to security, and check whether anyone else got the same email",
+          "short": "Reported the email",
+          "effects": {
+            "minutes": 0,
+            "evidence": 20,
+            "set": {
+              "phishReported": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "MITRE ATT&CK T1566.001 · Spearphishing Attachment",
+            "Phishing reporting"
+          ],
+          "note": "Security blocks the sender and finds the same email in forty inboxes. Thirty-nine people ignored it. One, in another department, had already clicked.",
+          "why": "Reporting a suspicious email protects more than one inbox: it lets security find everyone else who received it. Here that turns up the one click you couldn't prevent, which matters months later.",
+          "whyDeep": "MITRE ATT&CK lists Spearphishing Attachment (T1566.001) as a common initial access technique. Office documents asking the user to enable macros are a classic delivery method; blocking macros in files from the internet and reporting suspicious mail are standard defences."
+        },
+        {
+          "key": "B",
+          "label": "Tell him it's fine. It's from the ministry, and he needs to read the regulations",
+          "short": "Said it was fine",
+          "effects": {
+            "minutes": 0,
+            "set": {
+              "macroEnabled": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "MITRE ATT&CK T1566.001 · Spearphishing Attachment"
+          ],
+          "note": "He enables content. The document shows a page of plausible regulations. Nothing else seems to happen.",
+          "why": "A sender's name proves nothing, and a document that needs macros to be read is a warning sign. \"Nothing happened\" is exactly what a quiet foothold looks like."
+        },
+        {
+          "key": "C",
+          "label": "Tell him to delete it and move on",
+          "short": "Told him to delete it",
+          "effects": {
+            "minutes": 0,
+            "points": 4
+          },
+          "tags": [
+            "Phishing reporting"
+          ],
+          "note": "He deletes it. Nobody else hears about it, including the colleague in another department who already clicked.",
+          "why": "Deleting protects one inbox. Reporting protects the organisation, because security can search for every copy and every click."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 0,
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-82 Rev. 3 · OT security"
+          ],
+          "note": "You reject all three and wait for a better idea. Reporting it was exactly right.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option was sound practice, so rejecting it costs extra points."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "echo"
+          },
+          "label": "Open the attachment in your own sandbox to see what it does, and tell security once you know",
+          "short": "Analysed it alone first",
+          "effects": {
+            "minutes": 0,
+            "evidence": 30,
+            "set": {
+              "keptQuiet": true
+            },
+            "points": 4
+          },
+          "tags": [
+            "MITRE ATT&CK T1566.001 · Spearphishing Attachment"
+          ],
+          "note": "Your analysis is thorough and takes a week. By the time you tell security, the colleague who clicked has been compromised for nine days.",
+          "why": "Echo's habit: finish the picture before sharing it. The analysis was good; the week of silence wasn't."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Report it to security and check for other copies.",
+          "short": "Reported it",
+          "correct": true
+        },
+        {
+          "by": "jayson",
+          "text": "Reply to the sender and ask if it's real.",
+          "short": "Replied to the sender",
+          "correct": false
+        },
+        {
+          "by": "echo",
+          "text": "Don't open it; send it to security.",
+          "short": "Sent it to security",
+          "correct": true
+        },
+        {
+          "by": "iris",
+          "text": "Print it and read it on paper.",
+          "short": "Printed it",
+          "correct": false
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "If it were really the ministry, they'd send a PDF. Report it.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Check the sender's domain letter by letter.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "No macros from outside, ever. Report and search for other copies.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Enable content just once to see what it says. One click can't hurt.",
+          "misleading": true
+        }
+      },
+      "next": [
+        {
+          "to": "cursor"
+        }
+      ]
+    },
+    "cursor": {
+      "act": "December 23",
+      "clockAt": "16:33",
+      "newScene": true,
+      "phase": "Detection & Analysis",
+      "title": "The cursor moves by itself",
+      "lights": 0,
+      "body": "{clock}. Months later, at the end of the shift, an operator calls you over. On his screen the cursor is moving on its own, clicking through the substation diagrams. A breaker opens. Then another. He grabs his mouse; the cursor ignores him.",
+      "logs": [
+        {
+          "text": "16:31 | HMI | Operator cursor moving without local input · remote session active",
+          "type": "hi"
+        },
+        {
+          "text": "16:32 | SCADA | Breaker CB-14 OPEN command from remote session",
+          "type": "hi"
+        }
+      ],
+      "spread": {
+        "label": "Substations switched off:",
+        "start": 3,
+        "total": 60,
+        "perSecond": 0.4,
+        "slowAfter": 40,
+        "slowEvent": {
+          "flag": "hesitated",
+          "meters": {
+            "A": -10
+          },
+          "penalty": 5,
+          "text": "While the control room argued, the session opened breakers at four more substations. A hospital switches to its generators."
+        }
+      },
+      "notes": {
+        "iris": "Whoever is driving that cursor has done this before. You won't win a race on their screen.",
+        "echo": "The session comes in over the control network's remote access, with a real operator's password.",
+        "moritz": "In operational technology, take the attacker's control away at the boundary, then run the process locally.",
+        "jayson": "Fight me for the mouse? I'll just log in again. You'd have to take the whole road away."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Grab control back: keep clicking to close the breakers as fast as they open",
+          "short": "Fought the cursor",
+          "effects": {
+            "minutes": 10,
+            "points": 0
+          },
+          "tags": [
+            "MITRE ATT&CK for ICS T0831 · Manipulation of Control"
+          ],
+          "note": "You and the operator click; the remote session clicks faster. Then the operator's account is locked out of his own screen.",
+          "why": "Racing an attacker inside their session is a race you lose: they can lock you out, and every click you make is on a system they control."
+        },
+        {
+          "key": "B",
+          "label": "Kill the remote session in the HMI software",
+          "short": "Killed the session",
+          "effects": {
+            "minutes": 5,
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "The session drops. Forty seconds later a new one appears, with the same stolen password, through the same remote access.",
+          "why": "Ending one session doesn't remove the attacker's way in. While the remote access path and the stolen credentials still work, they simply come back."
+        },
+        {
+          "key": "C",
+          "label": "Reboot the SCADA servers to clear whatever is running",
+          "short": "Rebooted the servers",
+          "effects": {
+            "minutes": 15,
+            "meters": {
+              "A": -10
+            },
+            "set": {
+              "rebooted": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "Two servers don't come back: their boot records have been wiped. The operators lose their own view of the grid.",
+          "why": "Rebooting blind in a live incident can destroy evidence and, as here, reveal that a wiper has already prepared the machines. You lose your own control without removing the attacker's."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 3,
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-82 Rev. 3 · OT security",
+            "MITRE ATT&CK T1133 · External Remote Services"
+          ],
+          "note": "You refuse all three: \"Don't fight them on their screen. Take the screen away from them.\" Two teammates speak up.",
+          "why": "Every option fights the attacker inside the system they control. The right move is outside it: cut their way in and fall back to local, manual control."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Cut every remote path into the control network now: the VPN, the remote tools, all of it.",
+          "short": "Cut all remote access",
+          "correct": true,
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "remoteStopped": true,
+              "cutRemote": true
+            }
+          }
+        },
+        {
+          "by": "jayson",
+          "text": "Plug in a second mouse and out-click them.",
+          "short": "Plugged in a second mouse",
+          "correct": false,
+          "effects": {
+            "minutes": 5
+          }
+        },
+        {
+          "by": "echo",
+          "text": "Send crews to the substations and switch them to local, manual control.",
+          "short": "Sent crews for manual control",
+          "correct": true,
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "remoteStopped": true,
+              "crewsEarly": true
+            }
+          }
+        },
+        {
+          "by": "iris",
+          "text": "Type a message in the session and ask them what they want.",
+          "short": "Messaged the attacker",
+          "correct": false,
+          "effects": {
+            "minutes": 5
+          }
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "They want you watching that cursor. Look away from it, at how they got in.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Remote access, real password. Close the road, not the session.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Boundary first, then local control. Never race inside the HMI.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Kill the session and they'll be back in a minute. Cut the line.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "power"
+        }
+      ]
+    },
+    "power": {
+      "phase": "Detection & Analysis",
+      "title": "Why the lights will go out",
+      "lights": 1,
+      "body": "{clock}. The facilities manager runs in: the control centre's own building is due to lose power soon, and nobody knows why. If the control room goes dark, so do the operators' screens and radios. The answer is somewhere in the last few minutes of events.",
+      "puzzle": {
+        "prompt": "Which event explains why the control centre is about to lose its own power? Pick one line.",
+        "lines": [
+          {
+            "text": "16:32 | SCADA | Breaker CB-14 OPEN command from remote session",
+            "why": "That breaker feeds a residential district, not the control centre. It explains the outage outside, not the threat to this building."
+          },
+          {
+            "text": "16:35 | Phone system | Call volume 40× normal · customers cannot get through",
+            "why": "The phone flood stops customers reporting outages and hearing news, but it doesn't touch the building's power."
+          },
+          {
+            "text": "16:40 | Facilities | Control-centre backup power schedule changed remotely",
+            "correct": true
+          },
+          {
+            "text": "16:41 | Field | Substation crews available for manual operation",
+            "why": "Good news, not the problem: these crews can run substations by hand."
+          }
+        ],
+        "points": 10,
+        "maxMisses": 2,
+        "missMinutes": 5,
+        "missPenalty": 4,
+        "missShort": "Misread the events",
+        "effects": {
+          "minutes": 5,
+          "set": {
+            "upsFound": true
+          }
+        },
+        "short": "Found the backup power change",
+        "revealedShort": "Needed the answer shown",
+        "note": "Someone changed the backup power schedule remotely: at 16:55 the control centre's own power would switch off. Facilities sets it back by hand.",
+        "revealedNote": "The facilities manager finds it himself: the backup power schedule was changed remotely. He sets it back by hand, if there's still time.",
+        "why": "Attackers on the grid also went after the defenders' ability to respond: their power, their phones, their screens. Reading the event stream for what targets your own operations is part of incident analysis.",
+        "tags": [
+          "NIST SP 800-82 Rev. 3 · OT security",
+          "Incident analysis"
+        ]
+      },
+      "consult": {
+        "iris": {
+          "hint": "What in that list touches this building, not the customers?",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Look for the word 'remotely' next to something that isn't a breaker.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Facilities systems are part of the attack surface. Check them.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "The breakers are the show. The real trick is somewhere quieter.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "public"
+        }
+      ]
+    },
+    "public": {
+      "phase": "Containment",
+      "title": "Phones down",
+      "lights": [
+        {
+          "if": {
+            "flag": "controlDark"
+          },
+          "value": 3
+        },
+        {
+          "value": 2
+        }
+      ],
+      "body": [
+        {
+          "if": {
+            "flag": "controlDark"
+          },
+          "text": "{clock}. In the dark control room, by torchlight, the call centre manager reports that nobody can get through: thousands of fake calls are jamming the lines. Customers are sitting in cold, dark homes with no idea what is happening or for how long."
+        },
+        {
+          "text": "{clock}. The call centre manager reports that nobody can get through: thousands of fake calls are jamming the lines. Customers are sitting in cold, dark homes with no idea what is happening or for how long."
+        }
+      ],
+      "logs": [
+        {
+          "text": "16:35 | Phone system | Call volume 40× normal · customers cannot get through",
+          "type": "hi"
+        }
+      ],
+      "notes": {
+        "iris": "Silence is the attacker's second weapon. People fill it with rumours.",
+        "echo": "The website is hosted outside the company network. It's still up.",
+        "moritz": "Crisis communication: use channels that still work, say what you know, and say when you'll update.",
+        "jayson": "Jamming the phones was cheap. It turned a blackout into panic."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Use every channel that still works: local radio and TV, the externally hosted website and social media, with short, honest updates on a schedule",
+          "short": "Informed the public honestly",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "publicInformed": true
+            },
+            "points": 10
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz's weakness: his first radio statement is full of technical terms, and listeners hear 'cyber attack' and little else. Reputation −5."
+            }
+          },
+          "tags": [
+            "Crisis communication",
+            "NIST SP 800-61 · Communication"
+          ],
+          "note": "Local radio runs the message every quarter hour: a deliberate attack, crews on the way, next update at 18:00. People start checking on elderly neighbours.",
+          "why": "When normal channels are down, reach people through any channel that still works. Honest, regular updates prevent panic and help people protect themselves."
+        },
+        {
+          "key": "B",
+          "label": "Wait for the phone lines to clear before saying anything",
+          "short": "Waited for the phones",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "silent": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "Crisis communication"
+          ],
+          "note": "The phones stay jammed for hours. Rumours of a nationwide blackout spread faster than any update.",
+          "why": "The jammed phones were part of the attack. Waiting for them gives the attacker exactly the silence they wanted."
+        },
+        {
+          "key": "C",
+          "label": "Post that it's a routine technical fault, to avoid panic",
+          "short": "Called it a technical fault",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -15
+            },
+            "set": {
+              "misled": true
+            },
+            "points": -20
+          },
+          "tags": [
+            "Crisis communication"
+          ],
+          "note": "By morning the national news calls it a cyber attack. Nobody believes Eastvale's next statement.",
+          "why": "Misleading the public in a crisis destroys trust when the truth comes out, and it usually does within hours. Say what you know, even if it's frightening."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 5,
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-82 Rev. 3 · OT security"
+          ],
+          "note": "You reject all three. Using every working channel was the right call, and the phones stay jammed while you wait.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option was sound practice, so rejecting it costs extra points."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "iris"
+          },
+          "label": "Call in a favour with the regional TV station: a live message on screen within ten minutes",
+          "short": "Got a live TV message",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "publicInformed": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "Crisis communication"
+          ],
+          "note": "Iris's contact at the station puts a message on screen before the evening news: deliberate attack, crews on the way, updates on the radio.",
+          "why": "Iris's ability: negotiation. Same honest message, through a channel she opened faster than anyone else could."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Radio, TV and the website, honestly, every hour.",
+          "short": "Used radio and TV",
+          "correct": true
+        },
+        {
+          "by": "jayson",
+          "text": "Wait until the phones work again.",
+          "short": "Waited",
+          "correct": false
+        },
+        {
+          "by": "echo",
+          "text": "Post on the external website and ask local radio to repeat it.",
+          "short": "Posted and asked radio",
+          "correct": true
+        },
+        {
+          "by": "iris",
+          "text": "Say nothing until we know who did it.",
+          "short": "Said nothing",
+          "correct": false
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "People in the dark need one thing from you: what's happening and when you'll speak again.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Say it's a routine fault. The truth can wait until the power's back.",
+          "misleading": true
+        },
+        "moritz": {
+          "hint": "Every working channel, honest updates, on a schedule.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "The phone flood was meant to make you go quiet. Don't.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "restore"
+        }
+      ]
+    },
+    "restore": {
+      "phase": "Recovery",
+      "title": "Power first or evidence first?",
+      "lights": [
+        {
+          "if": {
+            "flag": "controlDark"
+          },
+          "value": 4
+        },
+        {
+          "value": 3
+        }
+      ],
+      "body": "{clock}. The national CERT is on a satellite phone. They want every affected machine kept exactly as it is for forensics. The field crews want to start switching substations back on by hand. It's minus eight outside.",
+      "logs": [
+        {
+          "text": "16:41 | Field | Substation crews available for manual operation",
+          "type": "info"
+        }
+      ],
+      "notes": {
+        "iris": "Nobody thanks you for perfect evidence from a city that froze.",
+        "echo": "Evidence doesn't have to wait for power. Crews switch breakers; analysts image disks. Different people.",
+        "moritz": "Safety and service first in OT. Preserve what you can without delaying restoration, and document everything.",
+        "jayson": "If you wipe everything tonight, you'll never know how I got in, and I'll use the same door again."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Restore power first by manual operation at the substations, while a separate team images key machines and saves logs",
+          "short": "Power first, evidence in parallel",
+          "effects": {
+            "minutes": 60,
+            "evidence": 30,
+            "set": {
+              "remoteStopped": true,
+              "restoredManual": true,
+              "evidenceKept": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-82 Rev. 3 · OT security",
+            "NIST SP 800-61 · Recovery",
+            "Manual operation"
+          ],
+          "note": "Crews drive from substation to substation, switching by hand. Districts come back one by one over the next hours. In the server room, two analysts image disks and photograph screens.",
+          "why": "In a grid, people's safety comes first: restore by manual operation. But evidence can be kept in parallel, by other people, without delaying power. Both matter: without evidence you can't find the way in or help others defend.",
+          "whyDeep": "NIST SP 800-82 Rev. 3 notes that OT incident response must weigh safety and the physical process, and that systems may need to run in manual mode while digital systems are restored. NIST SP 800-61 stresses preserving evidence where possible during recovery."
+        },
+        {
+          "key": "B",
+          "label": "Evidence first: nobody touches anything until the CERT has imaged every machine",
+          "short": "Evidence first",
+          "effects": {
+            "minutes": 240,
+            "meters": {
+              "A": -20,
+              "R": -10
+            },
+            "set": {
+              "remoteStopped": true,
+              "evidenceKept": true,
+              "delayed": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Evidence"
+          ],
+          "note": "The forensics are excellent. Thousands of homes stay dark and cold for four extra hours.",
+          "why": "Evidence matters, but not more than people's safety in winter. Manual restoration doesn't need the evidence systems; they can be preserved in parallel."
+        },
+        {
+          "key": "C",
+          "label": "Wipe and reinstall everything tonight so the systems come back clean and fast",
+          "short": "Wiped everything",
+          "effects": {
+            "minutes": 90,
+            "set": {
+              "remoteStopped": true,
+              "evidenceLost": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Recovery"
+          ],
+          "note": "By morning the servers are fresh. Nobody can say how the attackers got in, so nobody can be sure they're out.",
+          "why": "Wiping without preserving evidence destroys the trail. You may also reinstall onto the same weak remote access, and the attackers return."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 5,
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-82 Rev. 3 · OT security"
+          ],
+          "note": "You reject all three. Power first with evidence in parallel was the balanced answer.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option was sound practice, so rejecting it costs extra points."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Manual restoration now; a second team preserves evidence.",
+          "short": "Did both in parallel",
+          "correct": true
+        },
+        {
+          "by": "jayson",
+          "text": "Wipe it all and start fresh.",
+          "short": "Wiped it all",
+          "correct": false
+        },
+        {
+          "by": "echo",
+          "text": "Crews switch by hand; analysts image the key machines.",
+          "short": "Split the teams",
+          "correct": true
+        },
+        {
+          "by": "iris",
+          "text": "Let the CERT decide everything.",
+          "short": "Let the CERT decide",
+          "correct": false
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Power first. And make sure someone else is quietly copying everything.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Different people, different jobs. Crews on breakers, analysts on disks.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Evidence first. Without it, the whole investigation is worthless.",
+          "misleading": true
+        },
+        "jayson": {
+          "hint": "Wipe it and I've left no trace. Keep it and you'll find my door.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "cert"
+        }
+      ]
+    },
+    "cert": {
+      "clockAt": "09:00",
+      "days": 1,
+      "phase": "Post-Incident Activity",
+      "title": "It began with an email",
+      "lights": 4,
+      "body": [
+        {
+          "if": {
+            "flag": "phishReported"
+          },
+          "text": "Next morning, {clock}. The investigation traces the attack to the spring email: the one you reported, and the one colleague who had already clicked. The national CERT asks whether Eastvale will share what it found with other utilities."
+        },
+        {
+          "text": "Next morning, {clock}. The investigation traces the attack back to a spring email with a macro-enabled attachment. The national CERT asks whether Eastvale will share what it found with other utilities."
+        }
+      ],
+      "notes": {
+        "iris": "Every other grid operator in the country is reading the same kind of email this morning.",
+        "echo": "Our indicators, the sender domains, the remote access logs: they're only useful if others get them fast.",
+        "moritz": "Coordinate with the national CERT and the sector's information-sharing centre. Facts only; attribution is for governments.",
+        "jayson": "If you keep this to yourselves, I'll do the same thing to the utility next door."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Share indicators and lessons with the national CERT and other utilities, cut remote access to the control network for good, and train staff on phishing again",
+          "short": "Shared and hardened",
+          "effects": {
+            "minutes": 60,
+            "set": {
+              "shared": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Post-Incident Activity",
+            "Information sharing",
+            "MITRE ATT&CK T1133 · External Remote Services"
+          ],
+          "note": "Within a week, two other utilities find the same email in their own mailboxes. One of them finds the same remote access foothold, before anything happens.",
+          "why": "Sharing turns one utility's bad night into everyone else's warning. And the fixes follow the attack's path: the email, the stolen passwords, the remote access into the control network."
+        },
+        {
+          "key": "B",
+          "label": "Keep the details internal to protect Eastvale's reputation",
+          "short": "Kept it internal",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "coveredUp": true
+            },
+            "points": -25
+          },
+          "tags": [
+            "Information sharing"
+          ],
+          "note": "Three weeks later a neighbouring utility goes dark the same way.",
+          "why": "Critical infrastructure depends on shared warnings. Keeping indicators to yourself protects no one, and often breaks reporting duties."
+        },
+        {
+          "key": "C",
+          "label": "Publicly name the country behind it on social media tonight",
+          "short": "Named a country publicly",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "attributedPublicly": true
+            },
+            "points": 1
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz's weakness: his post explains the technical evidence at length and reads like a diplomatic incident. Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "Incident communication"
+          ],
+          "note": "The post goes around the world. The government asks why a utility is doing attribution before the investigation has finished.",
+          "why": "Attribution is slow, careful work for investigators and governments. A utility's job is to restore, share technical facts and coordinate with the CERT."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 5,
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-82 Rev. 3 · OT security"
+          ],
+          "note": "You reject all three. Sharing with the CERT and fixing the path in was exactly what the night taught.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option was sound practice, so rejecting it costs extra points."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Share with the CERT and the sector, and close the remote access.",
+          "short": "Shared and closed access",
+          "correct": true
+        },
+        {
+          "by": "jayson",
+          "text": "Post everything publicly, including the logs.",
+          "short": "Posted the logs",
+          "correct": false
+        },
+        {
+          "by": "echo",
+          "text": "Send our indicators to the CERT today.",
+          "short": "Sent the indicators",
+          "correct": true
+        },
+        {
+          "by": "iris",
+          "text": "Wait until the lawyers say it's safe.",
+          "short": "Waited for lawyers",
+          "correct": false
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Your neighbours are next. Tell them.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Send the indicators today, while they still matter.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "CERT, sector sharing, and fix the path in: email, credentials, remote access.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Keep it quiet and I get to use the same email on someone else.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "end"
+        }
+      ]
+    }
+  },
+  "endings": [
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "moreBreakers"
+          },
+          {
+            "flag": "firmwareGone"
+          }
+        ]
+      },
+      "grade": "Rooted",
+      "tone": "bad",
+      "text": "The attackers kept their remote access long enough to switch off district after district and break the substations' communications behind them. Eastvale ran by hand for weeks. It all began with an email."
+    },
+    {
+      "if": {
+        "flag": "coveredUp"
+      },
+      "grade": "Kept in the dark",
+      "tone": "bad",
+      "text": "The lights came back, but the lessons stayed inside Eastvale. Three weeks later, another utility went dark the same way."
+    },
+    {
+      "if": {
+        "flag": "misled"
+      },
+      "grade": "Lost the public",
+      "tone": "bad",
+      "text": "Power returned, but the public was told a story that fell apart by morning. In the next crisis, nobody will believe Eastvale's first statement."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "remoteStopped"
+          },
+          {
+            "not": {
+              "flag": "moreBreakers"
+            }
+          },
+          {
+            "not": {
+              "flag": "controlDark"
+            }
+          },
+          {
+            "flag": "publicInformed"
+          },
+          {
+            "flag": "restoredManual"
+          },
+          {
+            "flag": "shared"
+          },
+          {
+            "not": {
+              "flag": "macroEnabled"
+            }
+          }
+        ]
+      },
+      "grade": "Lights back on",
+      "tone": "good",
+      "text": "You refused to fight the attacker on their own screen, kept the control room powered, told people the truth, and brought the grid back by hand. It began with an email, as everything did, from the first day. You've come a long way since then."
+    },
+    {
+      "grade": "Dawn, eventually",
+      "tone": "mixed",
+      "text": "The lights came back and the attackers were shut out, but a slow cut-off, a dark control room or a hard trade-off made the night longer than it needed to be."
+    }
+  ],
+  "lessons": [
+    "It began with an email: report suspicious attachments, and never enable macros in documents from outside.",
+    "Don't fight an attacker inside a system they control. Cut their way in and fall back to local, manual operation.",
+    "Attackers may target your ability to respond: your power, your phones, your screens. Look for that too.",
+    "When normal channels are down, reach people any way that still works, honestly and on a schedule.",
+    "Restore power first, and preserve evidence in parallel with separate people.",
+    "Share indicators with the national CERT and your sector. Your neighbours are next."
+  ],
+  "standards": [
+    "NIST SP 800-82 Rev. 3 (Guide to Operational Technology Security)",
+    "NIST SP 800-61 (Computer Security Incident Handling Guide)",
+    "MITRE ATT&CK: T1566.001 Spearphishing Attachment, T1133 External Remote Services",
+    "MITRE ATT&CK for ICS: T0831 Manipulation of Control"
+  ],
+  "whatActuallyHappened": {
+    "title": "What actually happened…",
+    "paragraphs": [
+      "On 23 December 2015, starting at about 15:35 local time, attackers cut power to roughly 225,000 customers in western Ukraine by attacking three regional electricity distribution companies (oblenergos): Prykarpattyaoblenergo, Kyivoblenergo and Chernivtsioblenergo. Outages lasted from one to about six hours.",
+      "The attack had started months earlier. Spear-phishing emails with Microsoft Office attachments carrying the BlackEnergy 3 malware gave the attackers a foothold in the companies' business networks in spring 2015. Over the following months they harvested credentials and used VPN access and existing remote administration tools to reach the control systems.",
+      "On the day, they took over operator workstations, locked operators out and used the SCADA screens to open breakers, taking at least 27 substations offline. They also uploaded malicious firmware to serial-to-Ethernet devices at substations so that remote control could not simply be restored, erased systems with a modified KillDisk, reconfigured a backup power supply so that a company building or data centre also lost power, and flooded call centres with thousands of calls so customers could not report outages.",
+      "The companies restored power by switching to manual operation, sending staff to substations. According to the E-ISAC and SANS analysis, they kept operating in a constrained mode for some time afterwards.",
+      "Security researchers attributed the attack to the group known as Sandworm. On 19 October 2020 the US Department of Justice announced charges against six officers of Russia's GRU Unit 74455 for, among other attacks, \"December 2015 through December 2016 destructive malware attacks against Ukraine's electric power grid\" using BlackEnergy, Industroyer and KillDisk."
+    ],
+    "sources": [
+      {
+        "label": "E-ISAC and SANS ICS: Analysis of the Cyber Attack on the Ukrainian Power Grid, Defense Use Case (18 March 2016)",
+        "url": "https://nsarchive.gwu.edu/sites/default/files/documents/3891751/SANS-and-Electricity-Information-Sharing-and.pdf"
+      },
+      {
+        "label": "US Department of Justice: Six Russian GRU officers charged in connection with worldwide deployment of destructive malware (19 October 2020)",
+        "url": "https://www.justice.gov/archives/opa/pr/six-russian-gru-officers-charged-connection-worldwide-deployment-destructive-malware-and"
+      },
+      {
+        "label": "Wikipedia: December 2015 Ukraine power grid cyberattack (summary with links to Wired, Reuters and the Ukrainian Ministry of Energy)",
+        "url": "https://en.wikipedia.org/wiki/December_2015_Ukraine_power_grid_cyberattack"
+      }
+    ]
+  }
+}

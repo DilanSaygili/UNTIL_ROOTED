@@ -1,0 +1,694 @@
+{
+  "id": "07-keys-on-github",
+  "level": 7,
+  "title": "Keys on GitHub",
+  "tier": "advanced",
+  "lighting": "day",
+  "options": 4,
+  "real": null,
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": {
+    "clock": "11:14",
+    "node": "leak"
+  },
+  "alarmAt": "11:04",
+  "introChoice": null,
+  "briefing": "A new job, a new view: you now lead incident response at Meridian Pay, a fintech in a tower above New York. Yesterday was the company hackathon. This morning the coffee is good, the skyline is clear, and a developer's weekend project is about to become your problem.",
+  "attacker": {
+    "activeWhile": {
+      "not": {
+        "flag": "keyRevoked"
+      }
+    },
+    "events": [
+      {
+        "at": 20,
+        "flag": "moreData",
+        "meters": {
+          "C": -15
+        },
+        "text": "While the key stays valid, the storage log keeps growing quietly: thousands more objects read from the customer-exports bucket. Nothing about it is loud. That is the point."
+      },
+      {
+        "at": 40,
+        "flag": "moreMiners",
+        "meters": {
+          "A": -10
+        },
+        "money": 12000,
+        "text": "The key is still valid, so more compute keeps appearing: 140 mining instances now, and another $12,000 on the bill."
+      },
+      {
+        "onEnter": "aftermath",
+        "if": {
+          "not": {
+            "flag": "storageChecked"
+          }
+        },
+        "flag": "silentLeak",
+        "meters": {
+          "C": -20,
+          "R": -25
+        },
+        "penalty": 10,
+        "text": "Two weeks later, a security researcher emails Meridian Pay: customer export files, names and partial account details, are being offered on a forum. They were read on the day of the leak, under the noise of the miners. Nobody looked at the storage logs."
+      }
+    ]
+  },
+  "nodes": {
+    "leak": {
+      "phase": "Containment",
+      "title": "Six minutes public",
+      "body": "{clock}. During yesterday's hackathon, a developer pushed a weekend project to a public repository. In it: a cloud access key for Meridian Pay's production account. Bots scan public code for keys around the clock, and someone found it within minutes. What do you do first?",
+      "logs": [
+        {
+          "text": "11:04 Repo alert · Public commit contains a cloud access key · EXAMPLE-KEY-•••• · pushed 6 min ago",
+          "type": "hi"
+        },
+        {
+          "text": "11:09 Billing · Spend this hour: $4,120 (baseline $38)",
+          "type": "hi"
+        },
+        {
+          "text": "11:10 Cloud log · 60 new compute instances in 3 regions created with the leaked key",
+          "type": "hi"
+        }
+      ],
+      "notes": {
+        "iris": "Key-scanning bots are run by people who sell what they find or use it fast. Mining is the cheap part. They'll check what else that key opens.",
+        "echo": "A public commit is forever: forks, clones, caches and scrapers already have it. Deleting the repo deletes nothing that matters.",
+        "moritz": "The key is the problem, not the repository. As long as the key is valid, everything else is cosmetic.",
+        "jayson": "If I'd grabbed that key, I'd have done two things already: start something loud to keep you busy, and copy anything valuable quietly."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Deactivate the leaked key now, then deal with the repository",
+          "short": "Revoked the key first",
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "keyRevoked": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "MITRE ATT&CK T1552 · Unsecured Credentials"
+          ],
+          "note": "The key is dead within five minutes. The app that used it throws errors until a new, narrower key is issued at lunchtime. Nothing new can be started or read with the old one.",
+          "why": "Once a secret is public, assume it's copied. Revoking the key is the only step that takes away the attacker's access; cleaning the repository can wait. A short app outage is the price of containment.",
+          "whyDeep": "MITRE ATT&CK lists credentials left in code and files as T1552, Unsecured Credentials. Public code hosts and cloud providers both scan for leaked keys, but neither can make an exposed key safe again: only revocation does."
+        },
+        {
+          "key": "B",
+          "label": "Delete the public repository first",
+          "short": "Deleted the repo first",
+          "effects": {
+            "minutes": 10,
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "The repository is gone. The key, already copied by whoever found it, still works.",
+          "why": "Deleting the repository removes the evidence, not the access. Bots copied the key minutes after the push; only revoking it stops its use."
+        },
+        {
+          "key": "C",
+          "label": "Make the repository private and rewrite its history to remove the key",
+          "short": "Scrubbed the repo history",
+          "effects": {
+            "minutes": 25,
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "Twenty-five careful minutes later, the history is clean. The key is just as valid as it was.",
+          "why": "Cleaning history is good hygiene for later, but it is not containment. Anyone who already copied the key keeps using it until it is revoked."
+        },
+        {
+          "key": "D",
+          "label": "Issue a new key for the app, deploy it, and revoke the old one after the next release",
+          "short": "Rotated after the next release",
+          "effects": {
+            "minutes": 40,
+            "set": {
+              "keyRevoked": true
+            },
+            "points": 5
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "The app never goes down. The old key stays valid for forty minutes, waiting for the release train.",
+          "why": "Planned rotation is right for routine changes. A key that is public right now is an emergency: availability of one app does not outweigh an attacker inside the production account."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "jayson"
+          },
+          "label": "Hack back: break into the servers that are using the key and shut them down",
+          "short": "Hacked back",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "R": -20
+            },
+            "set": {
+              "hackedBack": true
+            },
+            "points": -10
+          },
+          "tags": [
+            "Law · Unauthorised access"
+          ],
+          "note": "The addresses belong to a university lab and a home router in Ohio, both hijacked. You have attacked two more victims. The key still works.",
+          "why": "Hacking back is illegal in most countries, for example under the US Computer Fraud and Abuse Act, and the machines you hit are usually someone else's. Revoke the key; report the abuse."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Whoever found that key is already shopping in your account. Take their card away.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "The repository is a copy. The key is the original. Kill the original.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Containment means removing access. Only one of these options removes access.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Six minutes is a lifetime for a key scanner. Revoke now, apologise to the app team later.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "noise"
+        }
+      ]
+    },
+    "noise": {
+      "phase": "Detection & Analysis",
+      "title": "Loud and quiet",
+      "body": "{clock}. The dashboards are screaming about the miners: dozens of machines burning money in three regions. Finance is on the phone about the bill. The quieter question is what else the key was used for.",
+      "logs": [
+        {
+          "text": "11:12 Storage log · Read operations on bucket customer-exports by the leaked key · 2,300 objects",
+          "type": "warn"
+        }
+      ],
+      "notes": {
+        "iris": "Crypto miners are a smoke grenade. Professionals make a mess in one room while they empty another.",
+        "echo": "Echo's extra clue: in the middle of the compute noise, the storage log shows reads from a bucket called customer-exports. Same key, same minute.",
+        "moritz": "The key's role could reach compute and storage. Investigate everything it could reach, not just what is loud.",
+        "jayson": "The miners are my distraction. Look where I'd be if I didn't want you looking."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Snapshot and stop the miners, then pull the key's full activity log across every service",
+          "short": "Stopped miners, read every log",
+          "effects": {
+            "minutes": 30,
+            "evidence": 40,
+            "set": {
+              "minersKilled": true,
+              "storageChecked": true
+            },
+            "points": 10
+          },
+          "characterEffects": {
+            "echo": {
+              "evidence": 20,
+              "note": "Echo's extra clue goes straight into the case file: the bucket reads, by minute. Evidence +20."
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Detection & Analysis",
+            "MITRE ATT&CK T1530 · Data from Cloud Storage",
+            "MITRE ATT&CK T1496 · Resource Hijacking"
+          ],
+          "note": [
+            {
+              "if": {
+                "flag": "moreData"
+              },
+              "text": "The miners stop. The activity log tells the real story: the key read the customer-exports bucket, not once but for as long as it stayed valid. Now you know the scope, and that it's a data breach, not just a bill."
+            },
+            {
+              "text": "The miners stop. The activity log tells the real story: at 11:12 the key read 2,300 objects from the customer-exports bucket. Now you know the scope, and that it's a data breach, not just a bill."
+            }
+          ],
+          "why": "The loud activity is rarely the only activity. A compromised credential's whole history across every service sets the scope of the incident. Snapshots keep evidence; stopping the miners stops the cost.",
+          "whyDeep": "Cloud providers keep management and data-access logs for exactly this. In MITRE ATT&CK, the miners are T1496 (Resource Hijacking) and the bucket reads are T1530 (Data from Cloud Storage). Under the shared responsibility model, the provider secures the cloud; reading your own logs and controlling your own keys is your job."
+        },
+        {
+          "key": "B",
+          "label": "Terminate every miner immediately and focus on stopping the bill",
+          "short": "Killed the miners, watched the bill",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "minersKilled": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "MITRE ATT&CK T1496 · Resource Hijacking"
+          ],
+          "note": "The bill stops climbing. Finance is happy. Nobody opens the storage log.",
+          "why": "Stopping the cost is necessary, but it treats the loudest symptom only. The miners may be a distraction from quieter activity, and terminating them without snapshots destroys evidence."
+        },
+        {
+          "key": "C",
+          "label": "Leave the miners running as evidence while you work through the billing report",
+          "short": "Left the miners running",
+          "effects": {
+            "minutes": 40,
+            "money": 9000,
+            "points": 1
+          },
+          "tags": [
+            "MITRE ATT&CK T1496 · Resource Hijacking"
+          ],
+          "note": "The billing report is very detailed. So is the bill: another $9,000 before lunch.",
+          "why": "Evidence is kept with snapshots, not by letting an attack run. And the billing report answers the least important question."
+        },
+        {
+          "key": "D",
+          "label": "Ask the cloud provider to waive the charges and wait for their support team",
+          "short": "Waited for provider support",
+          "effects": {
+            "minutes": 60,
+            "money": 6000,
+            "points": 1
+          },
+          "tags": [
+            "Shared responsibility model"
+          ],
+          "note": "Support is sympathetic and opens a ticket. They don't look at your storage logs: that's your side of the shared responsibility model.",
+          "why": "The provider secures the cloud itself; your keys, roles and data access are yours to manage and investigate. Waiting for them hands your incident to someone who isn't responsible for it."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "When something is this loud, ask what it's covering.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Read the storage log line in your feed again. Then read the rest.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Scope the incident by everything the key could reach. The role allowed storage too.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "If I made you watch the miners, I didn't want you reading the bucket logs.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "iam"
+        }
+      ]
+    },
+    "iam": {
+      "phase": "Eradication",
+      "title": "Why could one key do all that?",
+      "body": "{clock}. The leaked key belonged to a role with full access to compute and storage, with no restrictions. It was set up that way \"temporarily\" two years ago, for a migration. What do you change?",
+      "logs": [
+        {
+          "text": "11:30 IAM · Leaked key's role: full access to compute and storage (no restrictions)",
+          "type": "warn"
+        }
+      ],
+      "notes": {
+        "iris": "Every \"temporary\" admin role is a future breach with a date not yet set.",
+        "echo": "The role was used by exactly one app, which reads one bucket. Everything else it could do was never used.",
+        "moritz": "Least privilege isn't a policy document. It's a role that can do one job and nothing else, and secrets that never touch source code.",
+        "jayson": "If the key could only read one bucket, I'd have had nothing to mine and almost nothing to steal."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Replace the role with least privilege, move secrets into a secrets manager, and add secret scanning before every push",
+          "short": "Least privilege + secret scanning",
+          "effects": {
+            "minutes": 60,
+            "set": {
+              "leastPriv": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-53 · AC-6 Least Privilege",
+            "CIS Controls v8 · 16 Application Software Security",
+            "Shared responsibility model"
+          ],
+          "note": "The new role can read one bucket and write one log. Secrets live in a vault, not in code, and a scanner now blocks any push that contains a key.",
+          "why": "Eradication means removing the conditions that made the incident possible: an over-privileged role, a long-lived key in code, and no check before pushing. Each fix shrinks what the next leak could do.",
+          "whyDeep": "NIST SP 800-53 control AC-6 (Least Privilege) asks that accounts get only the access needed for their tasks. Short-lived credentials from a secrets manager and pre-push secret scanning address the root cause, not just this key."
+        },
+        {
+          "key": "B",
+          "label": "Keep the role and send a memo: never commit keys again",
+          "short": "Sent a memo",
+          "effects": {
+            "minutes": 10,
+            "points": 1
+          },
+          "tags": [
+            "Security awareness"
+          ],
+          "note": "The memo is read, nodded at, and forgotten by the next hackathon.",
+          "why": "People make mistakes; controls catch them. A memo without a technical guardrail leaves the same over-powered role waiting for the next leaked key."
+        },
+        {
+          "key": "C",
+          "label": "Delete the role entirely and let the app stay broken until someone rebuilds it",
+          "short": "Deleted the role",
+          "effects": {
+            "minutes": 15,
+            "meters": {
+              "A": -15
+            },
+            "points": 4
+          },
+          "tags": [
+            "NIST SP 800-53 · AC-6 Least Privilege"
+          ],
+          "note": "The payment-reports app is down for three days. The underlying habit, broad roles and keys in code, is unchanged.",
+          "why": "Removing access is safe but blunt. The goal is the right access for the job, not no access, and the root causes (secrets in code, no scanning) still need fixing."
+        },
+        {
+          "key": "D",
+          "label": "Require MFA on the developer's console login",
+          "short": "Added MFA to the console",
+          "effects": {
+            "minutes": 10,
+            "points": 2
+          },
+          "tags": [
+            "Identity hygiene"
+          ],
+          "note": "The developer now taps a phone to log in to the console. The access keys used by programs don't ask for MFA at all.",
+          "why": "MFA protects interactive logins. The leaked credential was a programmatic access key, which MFA on the console does not touch. Right tool, wrong problem."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Make the next leak boring: a key that can do almost nothing.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Look at what the role actually used. Grant exactly that.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Least privilege, secrets out of code, and a check before every push. Three controls, one root cause.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Memos don't stop me. Scanners and narrow roles do.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "aftermath"
+        }
+      ]
+    },
+    "aftermath": {
+      "clockAt": "10:00",
+      "days": 14,
+      "newScene": true,
+      "phase": "Post-Incident Activity",
+      "title": "Two weeks later",
+      "body": [
+        {
+          "if": {
+            "flag": "silentLeak"
+          },
+          "text": "Two weeks later, {clock}. The customer data is on a forum, and the press has the story. The board wants a statement by the end of the day."
+        },
+        {
+          "text": "Two weeks later, {clock}. The post-incident review. You know the leaked key read files from the customer-exports bucket: names and partial account details. The board wants to know what Meridian Pay owes its customers."
+        }
+      ],
+      "notes": {
+        "iris": "The temptation will be to call this a billing incident. It wasn't, and the logs say so.",
+        "echo": "Every object read is in the access log, by name. You can tell each customer exactly what was exposed.",
+        "moritz": "Notification is a legal duty with a deadline. Get the wording right and plain; I'd get help with the plain part.",
+        "jayson": "The developer feels terrible already. Shaming them in public teaches everyone else to hide their mistakes."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Notify affected customers and the regulators: what was read, when, and what Meridian Pay is doing about it",
+          "short": "Notified customers and regulators",
+          "effects": {
+            "minutes": 60,
+            "meters": {
+              "R": -5
+            },
+            "set": {
+              "notified": true
+            },
+            "points": 10
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz's first draft reads like an architecture review; the second, rewritten by legal, is fine. Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "Breach notification (e.g. GDPR Art. 33–34, NY SHIELD Act)",
+            "NIST SP 800-61 · Post-Incident Activity",
+            "Blameless post-incident review"
+          ],
+          "note": "Customers get a clear notice and free monitoring. The regulators get the timeline. The review that follows is blameless: it names the missing controls, not the developer.",
+          "why": "When personal data is accessed, breach-notification laws set duties and deadlines, and customers need the facts to protect themselves. A blameless review fixes systems instead of scaring people into silence."
+        },
+        {
+          "key": "B",
+          "label": "Notify only if the data shows up publicly",
+          "short": "Waited to see if it leaked",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "waitedToSee": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "Breach notification (e.g. GDPR Art. 33–34, NY SHIELD Act)"
+          ],
+          "note": "You wait. If it does show up, you'll have to explain why you knew and said nothing.",
+          "why": "Notification duties are triggered by unauthorised access, not by publication. Waiting for proof of misuse is how a breach becomes a cover-up."
+        },
+        {
+          "key": "C",
+          "label": "Describe the incident publicly as a crypto-mining billing issue only",
+          "short": "Called it a billing issue",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -15
+            },
+            "set": {
+              "minimized": true
+            },
+            "points": -5
+          },
+          "tags": [
+            "Breach notification (e.g. GDPR Art. 33–34, NY SHIELD Act)"
+          ],
+          "note": "The statement is technically true about the miners and silent about the customers. It won't survive the first journalist who asks about storage.",
+          "why": "Telling only the harmless part of the story is misleading by omission. Regulators and customers judge a company by how honestly it reports what happened."
+        },
+        {
+          "key": "D",
+          "label": "Name the developer who leaked the key in the company-wide review",
+          "short": "Blamed the developer",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "blamed": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "Blameless post-incident review"
+          ],
+          "note": "The developer resigns. At the next hackathon, nobody reports anything that looks like a mistake.",
+          "why": "The developer made a mistake that the system made easy and failed to catch. Blaming people hides root causes and teaches others to stay silent."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "iris"
+          },
+          "label": "Brief the regulator quietly and skip customer notices unless they insist",
+          "short": "Told only the regulator",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "quietRegulator": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "Breach notification (e.g. GDPR Art. 33–34, NY SHIELD Act)"
+          ],
+          "note": "The regulator listens, then asks why customers weren't told. They insist.",
+          "why": "Iris's shortcut: satisfy the authority, avoid the customers. But the people whose data was read are the ones who can act on the news, and many laws require telling them directly."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Don't let anyone call this a billing incident. The logs will contradict you.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "The access log names every file read. Use it to tell each customer exactly what happened.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Notification is a legal process with deadlines. Follow it, and keep the review blameless.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Fix the system, not the developer. And tell the customers before someone else does.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "end"
+        }
+      ]
+    }
+  },
+  "endings": [
+    {
+      "if": {
+        "flag": "hackedBack"
+      },
+      "grade": "Outside the law",
+      "tone": "bad",
+      "text": "While the leaked key kept working, you attacked machines that turned out to belong to other victims. Meridian Pay's incident now has a legal chapter."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "silentLeak"
+          },
+          {
+            "any": [
+              {
+                "flag": "minimized"
+              },
+              {
+                "flag": "blamed"
+              }
+            ]
+          }
+        ]
+      },
+      "grade": "Rooted",
+      "tone": "bad",
+      "text": "The miners were the show; the customer data was the prize. You watched the show, and when the data surfaced, the story became a cover-up and a scapegoat."
+    },
+    {
+      "if": {
+        "flag": "silentLeak"
+      },
+      "grade": "Fooled by the noise",
+      "tone": "bad",
+      "text": "You stopped the miners and the bill. Meanwhile the customer data walked out quietly, and you learned about it from a forum."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "keyRevoked"
+          },
+          {
+            "not": {
+              "flag": "moreData"
+            }
+          },
+          {
+            "flag": "storageChecked"
+          },
+          {
+            "flag": "leastPriv"
+          },
+          {
+            "flag": "notified"
+          }
+        ]
+      },
+      "grade": "Least privilege, lesson learned",
+      "tone": "good",
+      "text": "The key died in minutes, the quiet bucket reads didn't escape you, customers heard the truth, and the next leaked key will be able to do almost nothing."
+    },
+    {
+      "if": {
+        "any": [
+          {
+            "flag": "minimized"
+          },
+          {
+            "flag": "blamed"
+          }
+        ]
+      },
+      "grade": "Wrong lesson",
+      "tone": "mixed",
+      "text": "The technical response held up, but the story didn't: an incident told by halves, or a developer blamed for a system's gaps."
+    },
+    {
+      "grade": "Contained with damage",
+      "tone": "mixed",
+      "text": "The leak was closed, but more slowly or less completely than it could have been: a key that lived too long, a role still too wide, or customers left waiting."
+    }
+  ],
+  "lessons": [
+    "A key pushed to public code is compromised within minutes. Revoke it first; cleaning the repository can wait.",
+    "Loud attacks can be distractions. Scope an incident by everything the credential could reach, not by what is noisiest.",
+    "Shared responsibility: the cloud provider secures the platform; your keys, roles and logs are yours.",
+    "Least privilege limits the damage of every future leak. Keep secrets out of code and scan before every push.",
+    "Tell customers what was accessed, honestly and on time. Keep post-incident reviews blameless."
+  ],
+  "standards": [
+    "NIST SP 800-61 (Computer Security Incident Handling Guide)",
+    "NIST SP 800-53: AC-6 Least Privilege",
+    "CIS Controls v8: Control 16, Application Software Security",
+    "Breach notification laws, e.g. GDPR Articles 33–34 and the New York SHIELD Act",
+    "MITRE ATT&CK: T1552 Unsecured Credentials, T1530 Data from Cloud Storage, T1496 Resource Hijacking"
+  ],
+  "whatActuallyHappened": null
+}

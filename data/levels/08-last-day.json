@@ -1,0 +1,709 @@
+{
+  "id": "08-last-day",
+  "level": 8,
+  "title": "The Last Day",
+  "tier": "advanced",
+  "lighting": "twilight",
+  "options": 4,
+  "real": null,
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": {
+    "clock": "17:08",
+    "node": "confront"
+  },
+  "alarmAt": "17:02",
+  "introChoice": null,
+  "briefing": "Late afternoon at Meridian Pay. Marcus Hale, a senior payments engineer, is leaving for a competitor; today is his last day, and there's cake in the kitchen. He flew back overnight from a customer visit to make it. Then the data loss prevention system raises an alert with his name on it.",
+  "attacker": {
+    "activeWhile": {
+      "not": {
+        "flag": "sessionsRevoked"
+      }
+    },
+    "events": [
+      {
+        "at": 45,
+        "flag": "moreExfil",
+        "meters": {
+          "C": -15
+        },
+        "text": "The DLP console lights up again: another upload to the same personal cloud storage, from Marcus's account. Marcus is in the kitchen eating cake. Whoever is uploading, it isn't him right now."
+      },
+      {
+        "at": 600,
+        "flag": "lateral",
+        "meters": {
+          "C": -10,
+          "I": -15
+        },
+        "penalty": 10,
+        "text": "Overnight, Marcus's still-valid session is used to open repositories he never worked on: the card-tokenisation service and its deployment keys. The intruder is moving deeper while everyone watches the wrong person."
+      }
+    ]
+  },
+  "nodes": {
+    "confront": {
+      "phase": "Detection & Analysis",
+      "title": "40 gigabytes",
+      "body": "{clock}. Marcus's exit interview is in twenty minutes. HR and his manager have seen the DLP alert and want answers now. His manager has an idea: \"He's leaving anyway. Let's just read his personal email and see where the files went.\"",
+      "logs": [
+        {
+          "text": "17:02 DLP · 40 GB uploaded to personal cloud storage · user: senior engineer (fictional) · last working day",
+          "type": "hi"
+        },
+        {
+          "text": "17:05 HR · Exit interview scheduled 17:30",
+          "type": "info"
+        }
+      ],
+      "notes": {
+        "iris": "Leavers taking data happens. So does someone using a leaver as cover. Don't let the obvious story write the report.",
+        "echo": "Echo's extra clue: the upload sessions came from a device fingerprint that doesn't match Marcus's company laptop or his phone.",
+        "moritz": "Evidence first, conclusions later. And personal email is outside what the company may lawfully read.",
+        "jayson": "If I wanted to steal from this company, a leaver on his last day is the perfect costume. Everyone will look at him."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Preserve the evidence quietly, bring in Legal and HR, and let the exit interview run normally",
+          "short": "Preserved evidence, involved Legal",
+          "effects": {
+            "minutes": 20,
+            "evidence": 40,
+            "set": {
+              "preserved": true
+            },
+            "points": 10
+          },
+          "characterEffects": {
+            "echo": {
+              "evidence": 20,
+              "note": "Echo's extra clue goes into the case file: the upload device is not one of Marcus's. Evidence +20."
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Detection & Analysis",
+            "NIST SP 800-86 · Chain of custody",
+            "CISA Insider Threat Mitigation Guide"
+          ],
+          "note": "The DLP records, the account logs and an image of Marcus's laptop are collected and logged with times and handlers. Legal is in the loop. The exit interview is polite and uneventful.",
+          "why": "An alert is a lead, not a verdict. Preserve evidence with a documented chain of custody, involve Legal and HR, and avoid tipping off or accusing anyone before the facts are in.",
+          "whyDeep": "NIST SP 800-86 describes collecting and preserving data so its integrity can be shown later, including a chain of custody: who handled the evidence, when, and how. CISA's Insider Threat Mitigation Guide stresses a multidisciplinary response (security, HR, Legal) and respect for privacy."
+        },
+        {
+          "key": "B",
+          "label": "Confront him in front of the team at his leaving drinks",
+          "short": "Confronted him in public",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -15
+            },
+            "set": {
+              "accused": true
+            },
+            "points": -5
+          },
+          "tags": [
+            "Employee rights",
+            "NIST SP 800-61 · Detection & Analysis"
+          ],
+          "note": "Marcus goes white, then red. \"I was on a plane all night. I didn't upload anything.\" Thirty colleagues are watching. His lawyer will be too.",
+          "why": "Public accusations before the facts are in create legal risk (defamation, wrongful treatment), alert any real culprit, and can't be taken back."
+        },
+        {
+          "key": "C",
+          "label": "Do what the manager says: read his personal email to see where the files went",
+          "short": "Read his personal email",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "readPrivate": true
+            },
+            "points": -5
+          },
+          "tags": [
+            "US Stored Communications Act (18 U.S.C. § 2701)",
+            "Employee privacy"
+          ],
+          "note": "IT gets into his personal mailbox through a saved browser session. There's nothing useful in it, and now Meridian Pay has accessed an employee's private account without authorisation.",
+          "why": "A personal email account is not company property. Accessing it without authorisation can break laws such as the US Stored Communications Act, and evidence gathered that way can poison the whole case."
+        },
+        {
+          "key": "D",
+          "label": "Ask him casually in the exit interview whether he took any files",
+          "short": "Asked him casually",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "tippedOff": true
+            },
+            "points": 4
+          },
+          "tags": [
+            "NIST SP 800-61 · Detection & Analysis"
+          ],
+          "note": "\"No, why?\" He looks puzzled, then worried. By evening the rumour is all over the office.",
+          "why": "An informal question tips off whoever is involved and gives you nothing you can rely on. Interviews come after evidence, with HR and Legal present."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "jayson"
+          },
+          "label": "Catch him at the car park before he leaves and demand his laptop and phone",
+          "short": "Demanded his devices at the car park",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -20
+            },
+            "set": {
+              "accused": true,
+              "jaysonRush": true
+            },
+            "points": -5
+          },
+          "tags": [
+            "Employee rights"
+          ],
+          "note": "Marcus refuses, calls security, and then a lawyer. Jayson's speed made the incident a legal case before it was an investigation.",
+          "why": "Jayson's weakness: haste. Seizing personal devices without legal basis or consent is unlawful in most places, and it hands any real culprit a head start."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "iris"
+          },
+          "label": "Have IT quietly copy his personal cloud storage using his saved session, to see what's there",
+          "short": "Copied his personal cloud quietly",
+          "effects": {
+            "minutes": 25,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "readPrivate": true
+            },
+            "points": -5
+          },
+          "tags": [
+            "US Stored Communications Act (18 U.S.C. § 2701)",
+            "Employee privacy"
+          ],
+          "note": "The copy works. It is also unauthorised access to a private account, and Legal goes pale when they hear about it.",
+          "why": "Iris's shortcut: technically easy, legally toxic. Evidence obtained by accessing a private account without authorisation can't be used and creates liability of its own."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Who benefits if everyone blames Marcus? Keep that question open until the evidence closes it.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Preserve the DLP records and the account logs. Look at which device did the uploading.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Chain of custody, Legal, HR. Personal email is off limits, whatever his manager says.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Don't move fast here. Fast is how you end up in court.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "account"
+        }
+      ]
+    },
+    "account": {
+      "phase": "Containment",
+      "title": "Disable or watch?",
+      "body": "{clock}. Marcus's account is still active, with sessions open on several devices. His access ends at midnight anyway, under the normal leaver process. What do you do with it now?",
+      "notes": {
+        "iris": "A leaver's account is valuable to anyone who wants to look like an insider. Close it on your terms, not the calendar's.",
+        "echo": "One of the open sessions was never signed in from a known device. It just started being used.",
+        "moritz": "Disabling a password doesn't end a session that's already authenticated. Tokens have to be revoked too.",
+        "jayson": "If I had a copy of his session token, I'd keep using it until someone kills it. Changing his password wouldn't bother me at all."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Revoke all his sessions and tokens now, preserve the account and its data, and alert on any reuse",
+          "short": "Revoked sessions, preserved the account",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "sessionsRevoked": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "MITRE ATT&CK T1550.004 · Web Session Cookie"
+          ],
+          "note": "Every session on every device ends. The account is frozen, not deleted, so its logs and files stay as evidence. Minutes later, an alert: something tried to reuse an old session token and was refused.",
+          "why": "Contain access without destroying evidence. Revoking sessions and tokens stops anyone using them, whoever they are; preserving the account keeps the trail intact.",
+          "whyDeep": "Stolen session cookies or tokens let someone act as a user without the password or MFA (MITRE ATT&CK T1550.004, Use Alternate Authentication Material: Web Session Cookie). That's why containment must revoke sessions, not just reset the password."
+        },
+        {
+          "key": "B",
+          "label": "Leave the account active and monitor it, to catch him in the act",
+          "short": "Left it active to watch",
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "watched": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "You set up alerts and go home for the night. The account stays open until the leaver process closes it at midnight, then reopens a session that was never closed.",
+          "why": "Watching can be valid with a plan, Legal's approval and someone actually watching. Overnight, unattended, it just leaves a door open."
+        },
+        {
+          "key": "C",
+          "label": "Delete the account and all its files at 18:00, as the leaver checklist says",
+          "short": "Deleted the account and files",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "sessionsRevoked": true,
+              "evidenceLost": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "NIST SP 800-86 · Chain of custody"
+          ],
+          "note": "The account is gone, and with it the mailbox, the files and most of the logs you'd need to explain what happened.",
+          "why": "A leaver checklist is not an incident procedure. Deleting the account ends access but destroys evidence; freeze and preserve instead."
+        },
+        {
+          "key": "D",
+          "label": "Reset his password but leave existing sessions alone",
+          "short": "Reset the password only",
+          "effects": {
+            "minutes": 5,
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "The password changes. The sessions that are already signed in carry on as if nothing happened.",
+          "why": "A password reset doesn't end sessions or tokens that are already authenticated. Whoever holds one keeps working."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "echo"
+          },
+          "label": "Keep the strange session to yourself and watch it overnight to map whoever is behind it",
+          "short": "Watched the session alone",
+          "effects": {
+            "minutes": 5,
+            "evidence": 30,
+            "set": {
+              "keptQuiet": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "By morning your notes on the intruder are excellent. The intruder had all night, and the team had no idea there was one.",
+          "why": "Echo's habit: keep the finding until it's complete. The finding was right; keeping it from the team left the session open."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Close it now. If it's Marcus, nothing is lost. If it isn't, you've just locked someone else out.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "One session doesn't belong to any of his devices. Kill all of them, keep the logs.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Revoke sessions and tokens, freeze the account, keep the data. Deletion is not containment.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Password resets don't stop session thieves. Revoke the sessions.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "records"
+        }
+      ]
+    },
+    "records": {
+      "clockAt": "09:00",
+      "days": 1,
+      "phase": "Detection & Analysis",
+      "title": "The timeline",
+      "body": "Next day, {clock}. Legal wants a clear account before anyone contacts Marcus or his new employer. The DLP alert says what was uploaded. It doesn't say who was at the keyboard.",
+      "notes": {
+        "iris": "Timelines convict and acquit. Build one before you pick a side.",
+        "echo": "The uploads have timestamps. Put them next to everything else you know about where Marcus was.",
+        "moritz": "Correlate independent sources: identity logs, badge records, travel records. Agreement means something; disagreement means more.",
+        "jayson": "If I were borrowing his account, I'd pick an hour when he couldn't possibly notice. Like when he's in the air."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Correlate the upload times with his sign-in, badge and travel records",
+          "short": "Correlated logs, badge and travel",
+          "effects": {
+            "minutes": 45,
+            "evidence": 30,
+            "set": {
+              "correlated": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Detection & Analysis",
+            "Avoiding bias"
+          ],
+          "note": "The timeline doesn't fit. The uploads ran from 03:00 to 03:40 from an outside address. At 03:00, Marcus was in a seat over the Atlantic.",
+          "why": "Independent records either support a hypothesis or break it. Here they break it. Confirmation bias, deciding first and looking for proof second, is the most common investigative failure in insider cases.",
+          "whyDeep": "Insider-threat guidance (for example CISA's Insider Threat Mitigation Guide) recommends corroborating technical indicators with other sources before acting, because a valid account doing something wrong does not prove its owner did it."
+        },
+        {
+          "key": "B",
+          "label": "Skip it: the DLP alert already shows his account did it",
+          "short": "Skipped the timeline",
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "assumed": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "Avoiding bias"
+          ],
+          "note": "The report says \"Marcus Hale exfiltrated 40 GB\". It's signed and sent to Legal.",
+          "why": "An account is not a person. Logs show what an account did, not who used it. Skipping corroboration turns a guess into an accusation."
+        },
+        {
+          "key": "C",
+          "label": "Ask his new employer to hand over his laptop",
+          "short": "Contacted his new employer",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "contactedEmployer": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "Employee rights"
+          ],
+          "note": "The new employer refuses and tells Marcus. Two companies' lawyers are now talking.",
+          "why": "Contacting a third party about an unproven accusation is a legal step, taken with counsel and evidence, not a fact-finding shortcut."
+        },
+        {
+          "key": "D",
+          "label": "Check only his office badge records",
+          "short": "Checked badge records only",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "badgeOnly": true
+            },
+            "points": 4
+          },
+          "tags": [
+            "NIST SP 800-61 · Detection & Analysis"
+          ],
+          "note": "He wasn't in the building at 03:00. Neither is anyone who uploads to the cloud from home, so it proves little on its own.",
+          "why": "One source is a start, not a timeline. The uploads were remote; you need sign-in and travel records too."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Build the timeline before the story. The story is very convenient for somebody.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Upload timestamps, his flight, his sign-ins. Three columns, one answer.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Correlate independent sources. If they disagree with the alert, believe the evidence, not the alert.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Check where he was at 03:00. I already know what you'll find.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "twist"
+        }
+      ]
+    },
+    "twist": {
+      "phase": "Eradication",
+      "title": "Someone else",
+      "body": [
+        {
+          "if": {
+            "flag": "correlated"
+          },
+          "text": "{clock}. The analysis is clear: someone outside the company stole Marcus's session token and used his account, timing the uploads for the hours he was on a plane. Marcus is a victim, not a suspect. What now?"
+        },
+        {
+          "text": "{clock}. A message from the cloud provider's abuse team changes everything: the uploads came from an address linked to a known account-takeover campaign, at hours Marcus was on a flight. Someone stole his session and used it. What now?"
+        }
+      ],
+      "logs": [
+        {
+          "text": "Next day · Analysis · Upload sessions 03:00–03:40 · source IP 198.51.100.77 · badge/travel record: user on a flight 01:15–07:50",
+          "type": "hi"
+        },
+        {
+          "text": "Next day · Identity · Sign-ins from an unfamiliar device using the engineer's session token",
+          "type": "hi"
+        }
+      ],
+      "notes": {
+        "iris": "An attacker who uses leavers as cover will do it again. Find how the token was stolen, or you'll meet them next month.",
+        "echo": "The token was copied from somewhere. His browser, a synced profile, a home device. That's where this started.",
+        "moritz": "Two jobs now: close the technical hole, and repair what this did to a person. I'm good at only one of them.",
+        "jayson": "If I'd done this, I'd still have other tokens. Check every account that touched the same device."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Treat it as account takeover: trace how the token was stolen, check every account it reached, and formally clear Marcus",
+          "short": "Account takeover; cleared Marcus",
+          "effects": {
+            "minutes": 60,
+            "set": {
+              "cleared": true
+            },
+            "points": 10
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz's apology to Marcus is technically complete and emotionally absent. Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication",
+            "MITRE ATT&CK T1539 · Steal Web Session Cookie",
+            "Avoiding bias"
+          ],
+          "note": "The token was copied from a browser profile synced to an old personal laptop with malware on it. Other accounts that touched it are reset. HR and Legal write to Marcus: he did nothing wrong, and the company says so in writing.",
+          "why": "Eradication means removing the attacker's way in (the stolen token and its source) and checking what else it reached. Clearing an innocent employee is part of the response, legally and ethically.",
+          "whyDeep": "MITRE ATT&CK T1539 (Steal Web Session Cookie) covers attackers taking session cookies from browsers or devices; the use of those cookies is T1550.004. Defences include short session lifetimes, binding sessions to devices, and revoking sessions on risk signals."
+        },
+        {
+          "key": "B",
+          "label": "Keep pursuing Marcus: he could have arranged it from the plane",
+          "short": "Kept pursuing Marcus",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "R": -15
+            },
+            "set": {
+              "doubledown": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "Avoiding bias"
+          ],
+          "note": "The investigation spends a week trying to prove an impossible story. The real intruder isn't in it at all.",
+          "why": "When evidence contradicts a hypothesis, the hypothesis goes, not the evidence. Doubling down is confirmation bias with a budget."
+        },
+        {
+          "key": "C",
+          "label": "Close the case: the data is gone either way",
+          "short": "Closed the case",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "closedEarly": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication"
+          ],
+          "note": "The case is closed. How the token was stolen is never found out.",
+          "why": "If you don't find how the attacker got in, you can't close the door. And whatever else the token touched stays unchecked."
+        },
+        {
+          "key": "D",
+          "label": "Warn his new employer about him anyway, just to be safe",
+          "short": "Warned his new employer",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -20
+            },
+            "set": {
+              "defamed": true
+            },
+            "points": -5
+          },
+          "tags": [
+            "Employee rights"
+          ],
+          "note": "Marcus's new job offer is withdrawn. Six weeks later, Meridian Pay receives a defamation claim.",
+          "why": "Spreading an accusation you know is unsupported harms an innocent person and exposes the company to defamation claims. \"Just to be safe\" is safe for no one."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Find where the token came from. That's your real attacker's front door.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Check the devices that synced his browser profile. Tokens don't steal themselves.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Close the hole, check what else it reached, and clear his name formally. All three.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "If I took one token, I took others. Look wider.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "end"
+        }
+      ]
+    }
+  },
+  "endings": [
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "lateral"
+          },
+          {
+            "any": [
+              {
+                "flag": "accused"
+              },
+              {
+                "flag": "doubledown"
+              },
+              {
+                "flag": "defamed"
+              },
+              {
+                "flag": "assumed"
+              }
+            ]
+          }
+        ]
+      },
+      "grade": "Rooted",
+      "tone": "bad",
+      "text": "Everyone watched Marcus. Meanwhile the real intruder used his account to reach the card-tokenisation service. The wrong man was blamed, and the right one got deeper."
+    },
+    {
+      "if": {
+        "any": [
+          {
+            "flag": "accused"
+          },
+          {
+            "flag": "defamed"
+          }
+        ]
+      },
+      "grade": "Wrong man",
+      "tone": "bad",
+      "text": "Marcus was on a plane. Meridian Pay accused him anyway, and now faces a lawsuit, a damaged reputation and a team that has learned how leavers get treated."
+    },
+    {
+      "if": {
+        "flag": "readPrivate"
+      },
+      "grade": "Crossed the line",
+      "tone": "bad",
+      "text": "The intruder was found, but the company read an employee's private account to get there. That part of the investigation is now a legal problem of its own."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "preserved"
+          },
+          {
+            "flag": "sessionsRevoked"
+          },
+          {
+            "not": {
+              "flag": "evidenceLost"
+            }
+          },
+          {
+            "not": {
+              "flag": "moreExfil"
+            }
+          },
+          {
+            "flag": "correlated"
+          },
+          {
+            "flag": "cleared"
+          }
+        ]
+      },
+      "grade": "The real intruder",
+      "tone": "good",
+      "text": "You didn't let a convenient story replace the evidence. The stolen session was cut off the same evening, the timeline exposed the outsider, and Marcus left with his name intact."
+    },
+    {
+      "grade": "Contained with damage",
+      "tone": "mixed",
+      "text": "The intruder was stopped in the end, but the evidence, the timeline or the account handling had gaps, and the outsider had more time than necessary."
+    }
+  ],
+  "lessons": [
+    "An alert names an account, not a person. Accounts can be used by someone else.",
+    "Preserve evidence with a chain of custody and involve Legal and HR before any confrontation.",
+    "Personal email and private accounts are off limits, however tempting.",
+    "Revoke sessions and tokens, not just passwords; freeze accounts instead of deleting them.",
+    "Corroborate with independent sources (sign-ins, badge, travel) and let evidence overrule the story.",
+    "Clearing an innocent person is part of the incident response."
+  ],
+  "standards": [
+    "NIST SP 800-61 (Computer Security Incident Handling Guide)",
+    "NIST SP 800-86 (Guide to Integrating Forensic Techniques into Incident Response): chain of custody",
+    "CISA Insider Threat Mitigation Guide (2020)",
+    "US Stored Communications Act, 18 U.S.C. § 2701 (unauthorised access to stored communications)",
+    "MITRE ATT&CK: T1539 Steal Web Session Cookie, T1550.004 Web Session Cookie"
+  ],
+  "whatActuallyHappened": null
+}

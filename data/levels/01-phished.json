@@ -1,0 +1,479 @@
+{
+  "id": "01-phished",
+  "level": 1,
+  "title": "Phished at 09:02",
+  "tier": "beginner",
+  "lighting": "day",
+  "options": 2,
+  "real": null,
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": {
+    "clock": "09:12",
+    "node": "alert"
+  },
+  "introChoice": null,
+  "briefing": "You work remotely as the security analyst for Corvane Logistics, a small freight company. It is a calm Tuesday morning. Coffee, inbox, dashboard. Then the dashboard turns red.",
+  "attacker": {
+    "activeWhile": {
+      "not": {
+        "flag": "sessionsRevoked"
+      }
+    },
+    "events": [
+      {
+        "at": 15,
+        "flag": "forwardRule",
+        "setVar": {
+          "ruleAt": "clock"
+        },
+        "meters": {
+          "C": -15
+        },
+        "text": "The attacker created a hidden inbox rule in Lena's mailbox. Every email containing \"invoice\" or \"IBAN\" is now forwarded to an outside address and moved out of her sight.",
+        "log": "AUDIT New-InboxRule name=\"RSS sync\" forwardTo=ext-relay@mail.example.net user=lena.k"
+      },
+      {
+        "at": 30,
+        "flag": "massPhish",
+        "meters": {
+          "R": -15,
+          "I": -10
+        },
+        "text": "Using Lena's account, the attacker sent a phishing email to 34 of her contacts, including two customers.",
+        "log": "MAIL outbound burst: 34 messages from lena.k, subject \"Updated shipping documents\""
+      }
+    ]
+  },
+  "nodes": {
+    "alert": {
+      "phase": "Detection & Analysis",
+      "title": "Impossible travel",
+      "body": "An identity alert fires for Lena, the company accountant. Her account signed in from Istanbul at 09:02 and from Lagos at 09:10. That is eight minutes for a five-hour flight. The second sign-in passed MFA. Lena says she clicked a \"shared document\" link this morning and typed her password and code on a page that looked exactly like the normal login.",
+      "logs": [
+        {
+          "text": "09:02 SIGNIN ok user=lena.k ip=198.51.100.24 geo=Istanbul,TR mfa=approved",
+          "type": "info"
+        },
+        {
+          "text": "09:10 SIGNIN ok user=lena.k ip=203.0.113.77 geo=Lagos,NG mfa=satisfied-by-token",
+          "type": "warn"
+        },
+        {
+          "text": "09:11 ALERT impossible_travel user=lena.k severity=HIGH",
+          "type": "hi"
+        }
+      ],
+      "choices": [
+        {
+          "key": "A",
+          "label": "Revoke all of Lena's active sessions and sign-in tokens now",
+          "short": "Revoked sessions",
+          "effects": {
+            "minutes": 5,
+            "meters": {
+              "A": -3
+            },
+            "set": {
+              "sessionsRevoked": true,
+              "fastRevoke": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "MITRE ATT&CK T1078 · Valid Accounts"
+          ],
+          "note": "Lena is signed out everywhere, including the attacker's stolen session. She grumbles about logging back in. The Lagos session drops at 09:17.",
+          "why": "MFA was approved, so this is likely an adversary-in-the-middle phishing page that captured her session cookie. A stolen session can keep working until it is revoked. Containment comes first; you can still read the logs afterwards because they are not lost when you revoke.",
+          "whyDeep": "NIST SP 800-61 moves to containment as soon as an incident is confirmed. A stolen session keeps working until it is revoked, so revoking it is the containment step. The logs can be pulled right after: ending the session does not erase them."
+        },
+        {
+          "key": "B",
+          "label": "Pull the full sign-in and mailbox logs first to understand the scope",
+          "short": "Logs first",
+          "effects": {
+            "minutes": 20,
+            "evidence": 30,
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Detection & Analysis",
+            "MITRE ATT&CK T1566 · Phishing"
+          ],
+          "note": "You build a clean timeline. It takes twenty minutes. The Lagos session stays live the whole time.",
+          "why": "Evidence matters, but logs are kept by the platform and do not disappear when you revoke a session. While you read them, the attacker still has the mailbox. With a confirmed high-severity alert, contain first and analyse in parallel."
+        }
+      ],
+      "next": [
+        {
+          "to": "scope"
+        }
+      ],
+      "notes": {
+        "iris": "A phishing page that gets past MFA usually steals the signed-in session itself. Crews who do that are after money: invoices and payments, not secrets.",
+        "echo": "Same session, two cities eight minutes apart. They didn't just steal her password. They copied her signed-in session.",
+        "moritz": "One stolen login should never be able to move money on its own. Whatever happens next, payments need a second check.",
+        "jayson": "If I had her mailbox, I'd hide with a forwarding rule and wait for a juicy invoice to come in."
+      }
+    },
+    "scope": {
+      "phase": "Containment",
+      "title": "Close the door behind them",
+      "body": [
+        {
+          "if": {
+            "flag": "forwardRule"
+          },
+          "text": "Lagos is still connected. You now know the attacker has been inside Lena's mailbox since 09:10. Her manager asks you to \"just reset her password and move on\"."
+        },
+        {
+          "if": {
+            "flag": "sessionsRevoked"
+          },
+          "text": "The stolen session is dead. Lena wants to get back to work. Her manager asks you to \"just reset her password and move on\". Attackers often leave something behind in a mailbox before they are kicked out."
+        },
+        {
+          "text": "The Lagos session is still connected. Her manager asks you to \"just reset her password and move on\"."
+        }
+      ],
+      "logs": [
+        {
+          "if": {
+            "flag": "forwardRule"
+          },
+          "text": "AUDIT New-InboxRule name=\"RSS sync\" by lena.k from 203.0.113.77",
+          "type": "hi"
+        },
+        {
+          "text": "IDP lena.k: 2 MFA methods registered (1 added today 09:10)",
+          "type": "warn"
+        }
+      ],
+      "choices": [
+        {
+          "key": "A",
+          "label": [
+            {
+              "if": {
+                "flag": "sessionsRevoked"
+              },
+              "text": "Check her inbox rules, app permissions and MFA methods, then reset the password"
+            },
+            {
+              "text": "Revoke her sessions, check inbox rules, app permissions and MFA methods, then reset the password"
+            }
+          ],
+          "short": "Full account cleanup",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "sessionsRevoked": true,
+              "rulesChecked": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication",
+            "MITRE ATT&CK T1114.003 · Email Forwarding Rule"
+          ],
+          "note": [
+            {
+              "if": {
+                "flag": "forwardRule"
+              },
+              "text": "You find an inbox rule called \"RSS sync\", created at {ruleAt}, forwarding invoice emails outside. You also find an MFA app the attacker registered at 09:10. Both are removed, the password is reset, and the account is clean."
+            },
+            {
+              "text": "You find an extra MFA method registered at 09:10 from the attacker's session. It is removed and the password is reset. No forwarding rules were set up. The account is clean."
+            }
+          ],
+          "why": "Attackers who reach a mailbox commonly add forwarding rules, extra MFA devices or app permissions so they can return later. A password reset alone does not remove any of these. Cleaning all persistence is what eradication means.",
+          "whyDeep": "MITRE ATT&CK lists mailbox forwarding rules as T1114.003. Attackers also add app permissions or their own sign-in methods so they can come back. Eradication means removing every one of these footholds, not only changing the password."
+        },
+        {
+          "key": "B",
+          "label": "Reset the password only, as the manager asked",
+          "short": "Password reset only",
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "weakReset": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication"
+          ],
+          "note": [
+            {
+              "if": {
+                "flag": "sessionsRevoked"
+              },
+              "text": "The password is new. Anything the attacker set up inside the account is still there."
+            },
+            {
+              "text": "The password is new, but the attacker's existing session was never revoked. Depending on the platform, an existing session can keep working until it is explicitly revoked. Lagos is still connected."
+            }
+          ],
+          "why": "A new password does not remove inbox rules or extra MFA devices, and it may not end sessions that already exist. It feels like a fix, which is why it is so common after phishing."
+        }
+      ],
+      "next": [
+        {
+          "to": "invoice"
+        }
+      ]
+    },
+    "invoice": {
+      "phase": "Containment",
+      "clockAt": "13:40",
+      "title": "Urgent: updated bank details",
+      "body": [
+        {
+          "if": {
+            "flag": "forwardRule"
+          },
+          "text": "{clock}, early afternoon. An email lands in finance, inside a real thread with Vellum Freight, a supplier Corvane has paid for years. It quotes the right purchase order number and last month's amount. It says their bank changed and asks for invoice #4471, $48,200, to go to a new IBAN today. The attacker has been reading every invoice email through the hidden rule, so the timing and the wording are perfect."
+        },
+        {
+          "text": "{clock}, early afternoon. An email lands in finance from \"Vellum Freight\", a supplier Corvane has paid for years. It says their bank changed and asks for invoice #4471, $48,200, to go to a new IBAN today. The sender address is vellum-frieght.example, one letter off from the real one."
+        }
+      ],
+      "logs": [
+        {
+          "if": {
+            "flag": "forwardRule"
+          },
+          "text": "MAIL inbound thread=PO-88213 from=accounts@vellumfreight.example (reply-to differs)",
+          "type": "warn"
+        },
+        {
+          "if": {
+            "not": {
+              "flag": "forwardRule"
+            }
+          },
+          "text": "MAIL inbound from=accounts@vellum-frieght.example SPF=pass domain_age=3d",
+          "type": "warn"
+        },
+        {
+          "text": "FIN payment request #4471 amount=48200 USD status=awaiting_approval",
+          "type": "info"
+        }
+      ],
+      "choices": [
+        {
+          "key": "A",
+          "label": "Call Vellum Freight on the phone number in the contract and confirm the IBAN",
+          "short": "Verified IBAN by phone",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "ibanVerified": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "Business Email Compromise · Out-of-band verification"
+          ],
+          "note": "Vellum's accountant is confused. Their bank has not changed. The payment is blocked and finance flags the new IBAN.",
+          "why": "Bank-detail changes are the core of business email compromise. Verify through a channel the attacker cannot control: the number in the contract, not the one in the email. A matching PO number proves only that someone read the thread.",
+          "whyDeep": "This is out-of-band verification: confirm a payment change through a channel the attacker does not control, such as the phone number in the contract. Email fraud works precisely because the email channel is the one that is compromised."
+        },
+        {
+          "key": "B",
+          "label": "Approve it. The PO number matches and the CFO wants it paid today",
+          "short": "Paid the invoice",
+          "effects": {
+            "minutes": 3,
+            "money": 48200,
+            "meters": {
+              "I": -10,
+              "R": -5
+            },
+            "set": {
+              "paid": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "Business Email Compromise · Payment fraud"
+          ],
+          "note": "$48,200 leaves for an account abroad. Two days later Vellum Freight asks why invoice #4471 is still unpaid.",
+          "why": "Urgency and authority (\"the CFO wants it today\") are classic pressure tactics. Money sent to a fraudulent account is hard to recover; the chance improves only if the bank is contacted within hours."
+        }
+      ],
+      "next": [
+        {
+          "to": "notify"
+        }
+      ]
+    },
+    "notify": {
+      "phase": "Post-Incident Activity",
+      "title": "Who needs to know?",
+      "body": [
+        {
+          "if": {
+            "flag": "forwardRule"
+          },
+          "text": "Lena's mailbox holds customer invoices with names, addresses and payment details. The audit log shows the hidden rule forwarded several of those invoices outside, so they were read. The legal team asks what you recommend."
+        },
+        {
+          "text": "Lena's mailbox holds customer invoices with names, addresses and payment details. The audit log shows the attacker opened several of them before the alert. The legal team asks what you recommend."
+        }
+      ],
+      "logs": [
+        {
+          "text": "AUDIT MailItemsAccessed user=lena.k ip=203.0.113.77 items=212",
+          "type": "warn"
+        }
+      ],
+      "choices": [
+        {
+          "key": "A",
+          "label": "Start the breach assessment now and notify the data protection authority within 72 hours of becoming aware",
+          "short": "Notified within 72h",
+          "effects": {
+            "minutes": 30,
+            "set": {
+              "notified": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "GDPR Art. 33 · 72-hour notification",
+            "KVKK · 72-hour breach notification"
+          ],
+          "note": "Legal files the notification on day two with the facts known so far and a plan to send updates. You document every decision in the incident record.",
+          "why": "Under GDPR Article 33, and KVKK in Turkey, a personal-data breach must be reported to the authority within 72 hours of becoming aware of it, unless it is unlikely to put people at risk. You do not need every answer first; information can be provided in phases. Whatever you decide, document why.",
+          "whyDeep": "GDPR Article 33 counts the 72 hours from when you become aware of a personal data breach, and allows the details to be sent in phases when not everything is known yet. Waiting for certainty is not a reason to wait.",
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz's notice is technically perfect and hard to read for anyone outside security: Reputation −5 extra."
+            }
+          }
+        },
+        {
+          "key": "B",
+          "label": "Wait until the investigation is 100% complete before telling anyone",
+          "short": "Waited to notify",
+          "effects": {
+            "minutes": 5,
+            "meters": {
+              "R": -20
+            },
+            "set": {
+              "lateNotice": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "GDPR Art. 33 · 72-hour notification"
+          ],
+          "note": "The investigation takes eleven days. The notification arrives late, and the authority asks why.",
+          "why": "The 72-hour clock starts when you become aware of the breach, not when the investigation ends. Late notification can bring fines and damages trust far more than an honest early report.",
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz's notice is technically perfect and hard to read for anyone outside security: Reputation −5 extra."
+            }
+          }
+        }
+      ],
+      "next": [
+        {
+          "to": "end"
+        }
+      ]
+    }
+  },
+  "endings": [
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "paid"
+          },
+          {
+            "not": {
+              "flag": "sessionsRevoked"
+            }
+          }
+        ]
+      },
+      "grade": "Rooted",
+      "tone": "bad",
+      "text": "The attacker never lost access. They took $48,200, used Lena's mailbox to phish her contacts, and were still reading her email when the day ended."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "paid"
+          },
+          {
+            "flag": "lateNotice"
+          }
+        ]
+      },
+      "grade": "Disaster",
+      "tone": "bad",
+      "text": "The money is gone and the breach was reported late. Corvane faces a regulator's questions and a very uncomfortable board meeting."
+    },
+    {
+      "if": {
+        "flag": "paid"
+      },
+      "grade": "Costly win",
+      "tone": "mixed",
+      "text": "The account is secured and the authority was told on time, but $48,200 went to the attacker. The process worked; one payment did not."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "fastRevoke"
+          },
+          {
+            "flag": "rulesChecked"
+          },
+          {
+            "flag": "ibanVerified"
+          },
+          {
+            "flag": "notified"
+          }
+        ]
+      },
+      "grade": "Textbook response",
+      "tone": "good",
+      "text": "Contained in minutes, cleaned completely, fraud stopped, regulator informed on time. This is what the playbook looks like when someone actually follows it."
+    },
+    {
+      "grade": "Contained with damage",
+      "tone": "mixed",
+      "text": "No money was lost and the attacker is out, but they had time to leave a mark before you closed every door."
+    }
+  ],
+  "lessons": [
+    "MFA can be bypassed by adversary-in-the-middle phishing pages that steal the session after login. Phishing-resistant MFA (FIDO2/passkeys) stops this.",
+    "Contain first: revoking sessions does not destroy the logs you need for analysis.",
+    "After a mailbox compromise, check inbox rules, MFA methods and app permissions. A password reset alone does not remove them.",
+    "Always verify bank-detail changes through a known, separate channel.",
+    "The GDPR/KVKK 72-hour clock starts when you become aware of a personal-data breach."
+  ],
+  "standards": [
+    "CIA triad: Confidentiality and Integrity",
+    "NIST SP 800-61 (Computer Security Incident Handling Guide; Rev. 3 aligns with NIST CSF 2.0)",
+    "MITRE ATT&CK: T1566 Phishing, T1078 Valid Accounts, T1114.003 Email Forwarding Rule",
+    "GDPR Article 33 and KVKK (Turkish Personal Data Protection Law) breach notification",
+    "ISO/IEC 27035 (Information security incident management)"
+  ],
+  "whatActuallyHappened": null
+}

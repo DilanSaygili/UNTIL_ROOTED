@@ -1,0 +1,1073 @@
+{
+  "id": "bonus-quiet-guest",
+  "level": 13,
+  "title": "The Quiet Guest",
+  "tier": "master",
+  "lighting": "warm",
+  "options": 4,
+  "real": {
+    "dates": "December 2020"
+  },
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": {
+    "clock": "09:10",
+    "node": "mfa"
+  },
+  "alarmAt": "09:04",
+  "introChoice": null,
+  "briefing": "Bonus case. Halberd Security protects other companies for a living, and its own network is quiet: no malware alerts, no outages, nothing. Just one small notification on a Monday morning. This hunt will take weeks, and the clues will be few. Keep track of them.",
+  "attacker": {
+    "activeWhile": {
+      "not": {
+        "flag": "monitorIsolated"
+      }
+    },
+    "events": [
+      {
+        "at": 5000,
+        "if": {
+          "not": {
+            "flag": "mfaContained"
+          }
+        },
+        "flag": "mfaUsed",
+        "meters": {
+          "C": -15
+        },
+        "penalty": 5,
+        "text": "With the extra MFA device still registered, someone signs in to the VPN as the employee every night for a week and quietly browses internal file shares."
+      },
+      {
+        "at": 15000,
+        "if": {
+          "not": {
+            "flag": "certRotated"
+          }
+        },
+        "flag": "mailRead",
+        "meters": {
+          "C": -20
+        },
+        "penalty": 10,
+        "text": "With forged sign-in tokens, the attackers read executives' cloud mailboxes for a week. No password was used, so no sign-in alert ever fired."
+      },
+      {
+        "at": 25000,
+        "flag": "deeper",
+        "meters": {
+          "C": -15,
+          "I": -10
+        },
+        "penalty": 15,
+        "text": "On the monitoring servers, the hidden component downloads a second tool and copies the red team's internal toolkit to an outside server."
+      }
+    ]
+  },
+  "nodes": {
+    "mfa": {
+      "act": "Week 1",
+      "phase": "Detection & Analysis",
+      "title": "\"It wasn't me\"",
+      "body": "Monday, {clock}. One low-priority notification: a new MFA device was registered on an employee's account over the weekend. You call her. \"No, I didn't register anything. I've had the same phone for two years.\"",
+      "logs": [
+        {
+          "text": "Week 1 | Identity | New MFA device registered for an employee · employee: \"It wasn't me\"",
+          "type": "warn"
+        }
+      ],
+      "notes": {
+        "iris": "Someone went to a lot of trouble to look exactly like her. That's not a prank.",
+        "echo": "Echo's extra clue: the device was registered at 03:12 on Sunday, from an address no one in the company has used before.",
+        "moritz": "An unexplained MFA registration is an account compromise until proven otherwise.",
+        "jayson": "A second MFA device is the quietest way to keep a key to someone's account. No malware needed."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Remove the device, reset her password, revoke her sessions, and open a full investigation",
+          "short": "Contained and investigated",
+          "effects": {
+            "minutes": 60,
+            "evidence": 20,
+            "set": {
+              "mfaContained": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "MITRE ATT&CK T1098.005 · Device Registration",
+            "NIST SP 800-61 · Detection & Analysis"
+          ],
+          "note": "Her account is locked down and the case file is open. The address the device came from leads nowhere obvious. That's the strange part.",
+          "why": "A device the user didn't register means someone else has her password and is setting up a way back in. Contain the account, then find out how they got the password.",
+          "whyDeep": "MITRE ATT&CK describes Device Registration (T1098.005): adversaries register their own device for MFA so they keep access. Alerting on new MFA registrations and confirming them with the user out of band is a standard identity defence."
+        },
+        {
+          "key": "B",
+          "label": "Remove the device and close the ticket. She probably forgot",
+          "short": "Removed it, closed the ticket",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "mfaContained": true,
+              "ticketClosed": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "MITRE ATT&CK T1098.005 · Device Registration"
+          ],
+          "note": "The device is gone. Nobody asks how someone else had her password.",
+          "why": "Removing the device stops one door, but the question that matters, how did someone else register it, goes unasked."
+        },
+        {
+          "key": "C",
+          "label": "Ask her to re-register her own phone and move on",
+          "short": "Asked her to re-register",
+          "effects": {
+            "minutes": 10,
+            "points": 0
+          },
+          "tags": [
+            "MITRE ATT&CK T1098.005 · Device Registration"
+          ],
+          "note": "She adds her phone again. The unknown device stays registered next to it.",
+          "why": "Adding her device doesn't remove the attacker's. The account now trusts two phones, one of them not hers."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 10,
+            "points": 2
+          },
+          "tags": [
+            "Threat hunting"
+          ],
+          "note": "You reject all three. Containing and investigating was exactly right.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option was sound practice, so rejecting it costs extra points."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "echo"
+          },
+          "label": "Leave the device in place and quietly watch what it does for a week before telling anyone",
+          "short": "Watched it alone",
+          "effects": {
+            "minutes": 30,
+            "evidence": 30,
+            "set": {
+              "keptQuiet": true
+            },
+            "points": 4
+          },
+          "tags": [
+            "MITRE ATT&CK T1098.005 · Device Registration"
+          ],
+          "note": "You collect a beautiful log of the device's sign-ins. So does the attacker, of your internal file shares.",
+          "why": "Echo's habit: watch and keep it to yourself. Watching can be a valid choice, but only as a team decision with Legal and management, never alone."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Contain the account and investigate how they got in.",
+          "short": "Contained and investigated",
+          "correct": true
+        },
+        {
+          "by": "jayson",
+          "text": "Remove the device; it's probably nothing.",
+          "short": "Removed it",
+          "correct": false
+        },
+        {
+          "by": "echo",
+          "text": "Lock the account and pull every sign-in for the last month.",
+          "short": "Locked and pulled sign-ins",
+          "correct": true
+        },
+        {
+          "by": "iris",
+          "text": "Ask her manager if she's trustworthy.",
+          "short": "Asked her manager",
+          "correct": false
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Ask how they got her password. The device is just the symptom.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Pull the registration details. Time and address.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Treat it as a compromise. Contain, preserve, investigate.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "People forget their old phones all the time. Close it.",
+          "misleading": true
+        }
+      },
+      "next": [
+        {
+          "to": "tokens"
+        }
+      ]
+    },
+    "tokens": {
+      "act": "Week 2",
+      "clockAt": "10:30",
+      "days": 7,
+      "phase": "Detection & Analysis",
+      "title": "Tokens from nowhere",
+      "body": "Week 2, {clock}. A cloud audit turns up something that shouldn't be possible: services accepted sign-in tokens for several users, but there's no matching sign-in anywhere. No password, no MFA prompt. The tokens are simply valid.",
+      "logs": [
+        {
+          "text": "Week 2 | Identity | Sign-in tokens accepted without matching sign-in records",
+          "type": "hi"
+        }
+      ],
+      "notes": {
+        "iris": "If they can mint valid tokens, they don't need anyone's password any more. They're printing keys.",
+        "echo": "Every one of those tokens was signed with our own token-signing certificate.",
+        "moritz": "Valid signatures on tokens nobody issued: the signing key is compromised. Rotate it and invalidate what it signed.",
+        "jayson": "If I had your token-signing key, I'd never touch a password again. Nothing would ever look like a sign-in."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Treat the token-signing certificate as stolen: rotate it, invalidate all tokens, and hunt through the cloud logs",
+          "short": "Rotated the signing certificate",
+          "effects": {
+            "minutes": 120,
+            "evidence": 20,
+            "set": {
+              "certRotated": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "MITRE ATT&CK T1606.002 · Forge Web Credentials: SAML Tokens",
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "Everyone has to sign in again; there's grumbling. The phantom tokens stop working. Whoever made them now has to find another way.",
+          "why": "Tokens with valid signatures but no sign-in mean someone can sign tokens themselves: the signing key has been stolen. Passwords don't matter; the key must be replaced and every token it signed invalidated.",
+          "whyDeep": "MITRE ATT&CK describes forging SAML tokens with a stolen token-signing certificate (T1606.002). Because forged tokens skip the sign-in, the defences are protecting signing keys, rotating them after compromise, and looking for tokens without matching sign-in events."
+        },
+        {
+          "key": "B",
+          "label": "Assume a logging glitch and open a support ticket with the cloud provider",
+          "short": "Called it a glitch",
+          "effects": {
+            "minutes": 20,
+            "points": 2
+          },
+          "tags": [
+            "Threat hunting"
+          ],
+          "note": "The provider replies after nine days: the logs are correct.",
+          "why": "When security-relevant data looks impossible, assume an attacker before a glitch. Logs that show access without sign-in are a known sign of token forgery."
+        },
+        {
+          "key": "C",
+          "label": "Force a password reset for every user",
+          "short": "Reset all passwords",
+          "effects": {
+            "minutes": 60,
+            "meters": {
+              "A": -5
+            },
+            "set": {
+              "allReset": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "Two thousand people reset their passwords. The phantom tokens keep working: they never needed a password.",
+          "why": "Forged tokens don't use passwords, so resetting passwords changes nothing for the attacker. The signing key is the problem."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 10,
+            "points": 2
+          },
+          "tags": [
+            "Threat hunting"
+          ],
+          "note": "You reject all three. Rotating the signing certificate was the fix, and the tokens keep working while you wait.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option was sound practice, so rejecting it costs extra points."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "jayson"
+          },
+          "label": "Trace where the tokens are used from and break into that server to see who's behind it",
+          "short": "Hacked back",
+          "effects": {
+            "minutes": 60,
+            "meters": {
+              "R": -15
+            },
+            "set": {
+              "hackedBack": true
+            },
+            "points": -10
+          },
+          "tags": [
+            "Computer misuse law",
+            "Hack back"
+          ],
+          "note": "The server belongs to a hosting company in your own country, rented with a stolen card. You've broken into an innocent provider's machine, and the tokens still work.",
+          "why": "Jayson's habit: hit back. Breaking into another system is illegal, usually lands on another victim, and does nothing about the stolen key."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Rotate the signing certificate and invalidate all tokens.",
+          "short": "Rotated the certificate",
+          "correct": true
+        },
+        {
+          "by": "jayson",
+          "text": "Reset everyone's password.",
+          "short": "Reset passwords",
+          "correct": false
+        },
+        {
+          "by": "echo",
+          "text": "Replace the signing key and hunt for every forged token.",
+          "short": "Replaced the key",
+          "correct": true
+        },
+        {
+          "by": "iris",
+          "text": "Ask the cloud provider to look into it.",
+          "short": "Asked the provider",
+          "correct": false
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "No sign-in, valid token. Someone has your stamp. Change the stamp.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Look at what signed those tokens. It's ours.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Reset every password. That's the standard response to account compromise.",
+          "misleading": true
+        },
+        "jayson": {
+          "hint": "Passwords are irrelevant if I can sign my own tokens.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "beacon"
+        }
+      ]
+    },
+    "beacon": {
+      "act": "Week 3",
+      "clockAt": "14:00",
+      "days": 7,
+      "phase": "Detection & Analysis",
+      "title": "The tool that watches everything",
+      "body": "Week 3, {clock}. Hunting through network data, you notice your own network monitoring platform, the trusted tool with administrator access to almost everything, calling out to an unfamiliar domain at irregular intervals. The vendor is well known. The software is signed. The team lead says: \"That's our monitoring. It's supposed to talk to things.\"",
+      "logs": [
+        {
+          "text": "Week 3 | Network | Monitoring software contacts an unfamiliar domain [defanged] at random intervals",
+          "type": "warn"
+        }
+      ],
+      "notes": {
+        "iris": "The one system nobody suspects is the one that sees everyone. Funny that.",
+        "echo": "The calls started about two weeks after the last monitoring update was installed. Not before.",
+        "moritz": "Trust is not a control. A signed tool can still be compromised.",
+        "jayson": "If I could hide inside one product, it would be the one every admin trusts and every firewall lets out."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Allow the domain. It's the vendor's telemetry, and the monitoring software is trusted",
+          "short": "Allowed the domain",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "trustedTool": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "MITRE ATT&CK T1195.002 · Compromise Software Supply Chain"
+          ],
+          "note": "The domain goes on the allow list. The calls continue, now officially approved.",
+          "why": "Assuming a trusted tool is clean is exactly the assumption a supply-chain attack relies on."
+        },
+        {
+          "key": "B",
+          "label": "Check the monitoring platform's own health dashboard to see if anything is wrong",
+          "short": "Checked its own dashboard",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "trustedTool": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "MITRE ATT&CK T1195.002 · Compromise Software Supply Chain"
+          ],
+          "note": "Every indicator is green. The dashboard is drawn by the same software you suspect.",
+          "why": "Asking a possibly compromised tool whether it's compromised tells you nothing. You need evidence from outside it."
+        },
+        {
+          "key": "C",
+          "label": "Install the vendor's newest update, so any bug is fixed",
+          "short": "Installed the newest update",
+          "effects": {
+            "minutes": 30,
+            "set": {
+              "trustedTool": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "MITRE ATT&CK T1195.002 · Compromise Software Supply Chain"
+          ],
+          "note": "The update installs cleanly. It comes from the same build pipeline as the last one.",
+          "why": "If the vendor's builds are the problem, a newer build from the same pipeline may carry the same thing. You trust the source you're trying to question."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 10,
+            "points": 10,
+            "set": {
+              "refusedTrust": true
+            }
+          },
+          "tags": [
+            "Threat hunting",
+            "MITRE ATT&CK T1195.002 · Compromise Software Supply Chain"
+          ],
+          "note": "You refuse all three: \"Every one of these trusts the tool. We don't, until we know.\" Two teammates speak up.",
+          "why": "All three options trust the monitoring software or its vendor. When the clue points at the trusted tool itself, the right move is outside it: isolate, preserve and examine."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Cut the monitoring servers off from the internet, image them, and treat the tool as compromised.",
+          "short": "Isolated the monitoring servers",
+          "correct": true,
+          "effects": {
+            "minutes": 60,
+            "set": {
+              "monitorIsolated": true
+            }
+          }
+        },
+        {
+          "by": "jayson",
+          "text": "Block that one domain and keep everything running.",
+          "short": "Blocked one domain",
+          "correct": false,
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "domainBlocked": true
+            }
+          }
+        },
+        {
+          "by": "echo",
+          "text": "Take the monitoring servers offline and look at what the software itself is doing, file by file.",
+          "short": "Took the servers offline to examine",
+          "correct": true,
+          "effects": {
+            "minutes": 60,
+            "set": {
+              "monitorIsolated": true
+            }
+          }
+        },
+        {
+          "by": "iris",
+          "text": "Call the vendor's support line and ask if this is normal.",
+          "short": "Called vendor support",
+          "correct": false,
+          "effects": {
+            "minutes": 30
+          }
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Who watches the watcher? Today, you do.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Check when the calls started. Line it up with the update history.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Signed software is trustworthy software. Trust the signature.",
+          "misleading": true
+        },
+        "jayson": {
+          "hint": "If I were inside your monitoring, I'd want you to ask my dashboard how I'm doing.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "build"
+        }
+      ]
+    },
+    "build": {
+      "act": "Week 4",
+      "clockAt": "11:00",
+      "days": 7,
+      "phase": "Containment",
+      "title": "Signed, and still wrong",
+      "body": [
+        {
+          "if": {
+            "flag": "monitorIsolated"
+          },
+          "text": "Week 4, {clock}. The images from the isolated monitoring servers are back from analysis. The vendor's signed update contains a component that isn't in the vendor's own source code. Thousands of organisations installed the same update."
+        },
+        {
+          "text": "Week 4, {clock}. A partner firm's analysts send you a warning, and you finally examine the monitoring software. The vendor's signed update contains a component that isn't in the vendor's own source code. Thousands of organisations installed the same update."
+        }
+      ],
+      "logs": [
+        {
+          "text": "Week 4 | Build | Signed update of the monitoring software contains a component not in source control",
+          "type": "hi"
+        }
+      ],
+      "notes": {
+        "iris": "This is bigger than us. Thousands of companies are running this tonight.",
+        "echo": "The component is signed with the vendor's real key. Their build system was broken into, not just their website.",
+        "moritz": "Coordinated disclosure: vendor and national CERT first, then the public, with indicators people can use.",
+        "jayson": "If you announce it before the vendor can respond, I'll know exactly which victims to rush before they patch."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Disconnect the software everywhere, tell the vendor and the national CERT privately, and agree a fast, coordinated public warning",
+          "short": "Coordinated disclosure",
+          "effects": {
+            "minutes": 240,
+            "set": {
+              "monitorIsolated": true,
+              "disclosed": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "Coordinated vulnerability disclosure",
+            "MITRE ATT&CK T1195.002 · Compromise Software Supply Chain",
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "Within days, the national CERT orders the software disconnected across government networks, and the vendor ships a clean build. Your indicators help thousands of others check their own networks.",
+          "why": "A supply-chain compromise affects every customer of the vendor. Contain your own copy, then warn through the vendor and the CERT so the warning is fast, accurate and comes with a fix.",
+          "whyDeep": "Coordinated disclosure gives the vendor time to confirm and fix while the CERT can issue binding or urgent guidance to the most exposed organisations. Publishing indicators of compromise lets every customer hunt for the same component."
+        },
+        {
+          "key": "B",
+          "label": "Quietly remove the software from your own network and say nothing. A security firm that got breached loses customers",
+          "short": "Kept it quiet",
+          "effects": {
+            "minutes": 60,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "monitorIsolated": true,
+              "coveredUp": true
+            },
+            "points": -25
+          },
+          "tags": [
+            "Coordinated vulnerability disclosure"
+          ],
+          "note": "Your network is cleaner. Thousands of others keep running the poisoned update for months.",
+          "why": "Silence protects your image for a while and leaves everyone else exposed. Security companies especially are trusted to warn others."
+        },
+        {
+          "key": "C",
+          "label": "Post everything publicly right now, with the vendor's name, before anyone else can",
+          "short": "Posted it publicly at once",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "R": -5
+            },
+            "set": {
+              "monitorIsolated": true,
+              "postedEarly": true
+            },
+            "points": 3
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz's weakness: his post is a dense technical thread that journalists misread, and the vendor's customers panic. Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "Coordinated vulnerability disclosure"
+          ],
+          "note": "Within an hour the news is everywhere, with no fix and no guidance. Some victims rip out their monitoring entirely; the attackers clean up behind themselves.",
+          "why": "Warning the public is right, but without the vendor and CERT there's no fix, no reliable guidance, and the attackers get a head start on covering their tracks."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 10,
+            "points": 2
+          },
+          "tags": [
+            "Threat hunting"
+          ],
+          "note": "You reject all three. Coordinated disclosure was the answer, and every hour more organisations stay exposed.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option was sound practice, so rejecting it costs extra points."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "iris"
+          },
+          "label": "Get the vendor's CEO on the phone tonight and agree a joint warning with the CERT within 48 hours",
+          "short": "Negotiated a joint warning",
+          "effects": {
+            "minutes": 120,
+            "set": {
+              "monitorIsolated": true,
+              "disclosed": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "Coordinated vulnerability disclosure"
+          ],
+          "note": "Iris has the CEO on the line by nine. The joint warning goes out with a fix two days later.",
+          "why": "Iris's ability: negotiation. Same coordinated disclosure, agreed faster because she got the right person on the phone."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Vendor and CERT first, then a coordinated public warning.",
+          "short": "Coordinated the warning",
+          "correct": true
+        },
+        {
+          "by": "jayson",
+          "text": "Say nothing and fix our own network.",
+          "short": "Fixed only our own",
+          "correct": false
+        },
+        {
+          "by": "echo",
+          "text": "Disconnect it, then brief the CERT and the vendor tonight.",
+          "short": "Briefed CERT and vendor",
+          "correct": true
+        },
+        {
+          "by": "iris",
+          "text": "Leak it to a journalist.",
+          "short": "Leaked it",
+          "correct": false
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Thousands of networks. Get the CERT on the phone tonight.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Keep this to ourselves. We're a security firm; nobody will trust us again.",
+          "misleading": true
+        },
+        "moritz": {
+          "hint": "Coordinated disclosure: vendor and CERT, then the public, with indicators.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Tell the world before the vendor's ready and I'll clean up before anyone looks.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "chain"
+        }
+      ]
+    },
+    "chain": {
+      "act": "Week 5",
+      "clockAt": "10:00",
+      "days": 7,
+      "phase": "Post-Incident Activity",
+      "title": "Put the pieces together",
+      "body": "Week 5, {clock}. You found the clues backwards: the MFA device first, then the tokens, then the monitoring tool, and the build last. The report has to tell the story in the order it happened.",
+      "order": {
+        "prompt": "Put the attacker's steps in the order they happened. Each step says what it needed first.",
+        "items": [
+          {
+            "id": "mfa",
+            "label": "A new MFA device is registered for an employee",
+            "needs": [
+              "tokens"
+            ],
+            "why": "The last step: a quiet, long-lived way back in, set up after the attackers already had access. It was also the first thing you noticed."
+          },
+          {
+            "id": "beacon",
+            "label": "The monitoring software wakes up and calls an outside domain",
+            "needs": [
+              "update"
+            ],
+            "why": "After a quiet period, the hidden component contacts its controllers and gets instructions."
+          },
+          {
+            "id": "build",
+            "label": "The vendor's build system is broken into",
+            "needs": [],
+            "why": "The start of everything: code is added during the build, so the vendor signs it like any other release."
+          },
+          {
+            "id": "tokens",
+            "label": "The token-signing key is stolen and tokens are forged",
+            "needs": [
+              "beacon"
+            ],
+            "why": "With administrator-level access from the monitoring servers, the attackers take the key that lets them sign their own tokens."
+          },
+          {
+            "id": "update",
+            "label": "A signed update ships to thousands of customers",
+            "needs": [
+              "build"
+            ],
+            "why": "Customers install it because it is signed and comes from a trusted vendor."
+          }
+        ],
+        "correct": [
+          "build",
+          "update",
+          "beacon",
+          "tokens",
+          "mfa"
+        ],
+        "points": 10,
+        "clashMinutes": 30,
+        "firstFlag": "rootFound",
+        "perfectFlag": "chainRight",
+        "shortLabel": "Attack timeline",
+        "effects": {
+          "minutes": 60
+        },
+        "tags": [
+          "Threat hunting",
+          "MITRE ATT&CK T1195.002 · Compromise Software Supply Chain"
+        ],
+        "note": "The timeline goes into the report. Each step put before the step it depended on had to be argued out again in review.",
+        "why": "Clues arrive in the reverse order of the attack: you see the last, noisiest step first. A good hunt keeps asking \"what had to happen before this?\" until it reaches the root: here, someone else's build system.",
+        "whyDeep": "Building the attack timeline is part of post-incident activity in NIST SP 800-61. Mapping each step to a technique (T1195.002, T1606.002, T1098.005) shows which control would have broken the chain at each point."
+      },
+      "consult": {
+        "iris": {
+          "hint": "Start with the thing everything else needed.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Which of these needed nothing before it?",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Follow the 'needs' backwards from the MFA device.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "You found my last step first. Most people do.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "after"
+        }
+      ]
+    },
+    "after": {
+      "phase": "Post-Incident Activity",
+      "title": "Trust, but verify the build",
+      "body": "{clock}. The board asks what changes, so this can't happen silently again.",
+      "notes": {
+        "iris": "We trusted a vendor's build process we'd never seen. That's the real gap.",
+        "echo": "Our monitoring servers could reach the whole internet. Why did they need to?",
+        "moritz": "Least privilege for tools, protected signing keys, alerts on identity changes, and verified software.",
+        "jayson": "Make my beacon fail to get out, and my key theft fail to work. Then I'm stuck."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Limit what monitoring tools can reach, protect signing keys in hardware, alert on new MFA devices and odd tokens, and demand build-integrity evidence from vendors",
+          "short": "Hardened the whole chain",
+          "effects": {
+            "minutes": 60,
+            "set": {
+              "hardened": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Post-Incident Activity",
+            "NIST SP 800-218 · Secure Software Development Framework"
+          ],
+          "note": "None of it is glamorous. Six months later a different attacker's tool tries to call out from a server and simply can't.",
+          "why": "Each control breaks one link in the chain you just reconstructed: no outbound internet for monitoring servers, keys that can't be copied, alerts on identity changes, and vendors who can show how their builds are protected.",
+          "whyDeep": "NIST SP 800-218, the Secure Software Development Framework, describes practices for protecting build environments and software integrity; customers can ask vendors to show they follow such practices."
+        },
+        {
+          "key": "B",
+          "label": "Switch to a different monitoring vendor and change nothing else",
+          "short": "Switched vendors",
+          "effects": {
+            "minutes": 30,
+            "points": 2
+          },
+          "tags": [
+            "Supply-chain risk"
+          ],
+          "note": "The new tool is installed with the same broad access and the same open internet connection.",
+          "why": "Any vendor's build can be compromised. Without limiting what the tool can do and reach, swapping vendors just swaps which build you trust blindly."
+        },
+        {
+          "key": "C",
+          "label": "Stop using third-party monitoring software altogether",
+          "short": "Stopped monitoring",
+          "effects": {
+            "minutes": 30,
+            "meters": {
+              "A": -10
+            },
+            "set": {
+              "blind": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "Supply-chain risk"
+          ],
+          "note": "The network goes quiet in the worst way: nobody can see it any more.",
+          "why": "Removing monitoring removes this risk and every detection with it. The answer is limiting tools, not going blind."
+        },
+        {
+          "key": "D",
+          "label": "None of these",
+          "short": "None of these",
+          "none": true,
+          "effects": {
+            "minutes": 10,
+            "points": 2
+          },
+          "tags": [
+            "Threat hunting"
+          ],
+          "note": "You reject all three. Hardening every link was the lesson of the hunt.",
+          "why": "\"None of these\" is only right when every option is wrong. Here one option was sound practice, so rejecting it costs extra points."
+        }
+      ],
+      "noneSuggestions": [
+        {
+          "by": "moritz",
+          "text": "Least privilege for tools, protected keys, identity alerts.",
+          "short": "Hardened the chain",
+          "correct": true
+        },
+        {
+          "by": "jayson",
+          "text": "Ban all third-party software.",
+          "short": "Banned third-party software",
+          "correct": false
+        },
+        {
+          "by": "echo",
+          "text": "No internet for monitoring servers, keys in hardware.",
+          "short": "Locked down tools and keys",
+          "correct": true
+        },
+        {
+          "by": "iris",
+          "text": "Buy a different product.",
+          "short": "Bought another product",
+          "correct": false
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Break every link you just drew. One control per step.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Start with why the monitoring servers could reach the internet.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Least privilege, protected keys, verified builds, identity alerts.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Switch vendors. The new one hasn't been hacked yet.",
+          "misleading": true
+        }
+      },
+      "next": [
+        {
+          "to": "end"
+        }
+      ]
+    }
+  },
+  "endings": [
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "mailRead"
+          },
+          {
+            "flag": "deeper"
+          }
+        ]
+      },
+      "grade": "Rooted",
+      "tone": "bad",
+      "text": "The guest read the executives' mail for weeks and walked out with the company's own toolkit. Every clue was there; none of them was followed far enough in time."
+    },
+    {
+      "if": {
+        "flag": "coveredUp"
+      },
+      "grade": "Kept it quiet",
+      "tone": "bad",
+      "text": "Halberd cleaned its own house and told no one. Thousands of other networks kept running the poisoned update for months."
+    },
+    {
+      "if": {
+        "flag": "hackedBack"
+      },
+      "grade": "Crossed the line",
+      "tone": "bad",
+      "text": "Halberd broke into an innocent hosting provider's server while the forged tokens kept working. The hunt continued, with a legal problem attached."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "mfaContained"
+          },
+          {
+            "flag": "certRotated"
+          },
+          {
+            "not": {
+              "flag": "deeper"
+            }
+          },
+          {
+            "not": {
+              "flag": "mailRead"
+            }
+          },
+          {
+            "flag": "disclosed"
+          },
+          {
+            "flag": "rootFound"
+          },
+          {
+            "flag": "hardened"
+          }
+        ]
+      },
+      "grade": "Found the quiet guest",
+      "tone": "good",
+      "text": "From one small notification, you followed the thread for weeks: an account, a key, a trusted tool, and finally someone else's build system. Then you warned everyone who had installed it. The quietest attack in the game was found by the most patient defender."
+    },
+    {
+      "grade": "Guest evicted, late",
+      "tone": "mixed",
+      "text": "The guest was found and shown the door, but a missed clue or a slow step gave them weeks they shouldn't have had."
+    }
+  ],
+  "lessons": [
+    "Small identity anomalies (a new MFA device, tokens without sign-ins) can be the only sign of a big intrusion.",
+    "Tokens that are valid but never issued mean a signing key is stolen. Rotate it; passwords don't matter.",
+    "Trusted, signed software can still be compromised at the source. Trust is not a control.",
+    "Clues arrive backwards. Keep asking what had to happen first.",
+    "Supply-chain compromises need coordinated disclosure: vendor, CERT, then everyone.",
+    "Give tools the least access they need, and protect the keys that prove identity."
+  ],
+  "standards": [
+    "NIST SP 800-61 (Computer Security Incident Handling Guide)",
+    "NIST SP 800-218 (Secure Software Development Framework)",
+    "MITRE ATT&CK: T1195.002 Compromise Software Supply Chain, T1098.005 Device Registration, T1606.002 Forge Web Credentials: SAML Tokens"
+  ],
+  "whatActuallyHappened": {
+    "title": "What actually happened…",
+    "paragraphs": [
+      "In late November 2020, the security company FireEye noticed that one of its employees' accounts \"had registered a second phone\" for two-factor codes; the employee had not done it. FireEye's CEO Kevin Mandia described this to the US Senate Intelligence Committee on 23 February 2021. On 8 December 2020 FireEye announced that a suspected state-sponsored attacker had stolen its red team tools.",
+      "Investigating its own breach, FireEye found that the attackers had come in through a trojanised update of SolarWinds Orion, a widely used network monitoring platform. Infected Orion versions, 2019.4 through 2020.2.1 HF1, had been released between March and June 2020. About 18,000 customers downloaded them. The malicious component, called SUNBURST, stayed dormant for about two weeks before contacting its controllers. CrowdStrike later identified SUNSPOT, the tool that inserted SUNBURST into Orion during SolarWinds' build process, so the infected updates were signed like any other.",
+      "Inside selected victims, the attackers moved on to identity systems, including stealing the certificates used to sign SAML tokens so they could impersonate users in on-premises and cloud services without signing in.",
+      "On 13 December 2020 the US Cybersecurity and Infrastructure Security Agency (CISA) issued an emergency directive telling federal agencies to disconnect or power down SolarWinds Orion. The US government later said nine federal agencies had been compromised. On 15 April 2021 the White House formally named Russia's Foreign Intelligence Service, the SVR, as the perpetrator and announced sanctions."
+    ],
+    "sources": [
+      {
+        "label": "Kevin Mandia (FireEye), written statement to the US Senate Select Committee on Intelligence (23 February 2021)",
+        "url": "https://www.intelligence.senate.gov/wp-content/uploads/2024/08/sites-default-files-documents-os-kmandia-022321.pdf"
+      },
+      {
+        "label": "White House: background press call by senior administration officials on Russia (15 April 2021)",
+        "url": "https://bidenwhitehouse.archives.gov/briefing-room/press-briefings/2021/04/15/background-press-call-by-senior-administration-officials-on-russia"
+      },
+      {
+        "label": "Wikipedia: 2020 United States federal government data breach (summary with links to FireEye, CrowdStrike, Microsoft and CISA)",
+        "url": "https://en.wikipedia.org/wiki/2020_United_States_federal_government_data_breach"
+      }
+    ]
+  }
+}

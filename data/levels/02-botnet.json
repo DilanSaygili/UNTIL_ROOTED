@@ -1,0 +1,470 @@
+{
+  "id": "02-botnet",
+  "level": 2,
+  "title": "Lights, Camera, Botnet",
+  "tier": "beginner",
+  "lighting": "twilight",
+  "options": 3,
+  "real": null,
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": {
+    "clock": "18:40",
+    "node": "outage"
+  },
+  "introChoice": null,
+  "briefing": "Evening at home. You are on an important video call with a client when the picture freezes and the internet dies. A minute later an email from your internet provider lands on your phone: \"Your IP address is taking part in a DDoS attack.\"",
+  "attacker": {
+    "activeWhile": {
+      "not": {
+        "flag": "cameraSecured"
+      }
+    },
+    "events": [
+      {
+        "at": 0,
+        "if": {
+          "flag": "rebootOnly"
+        },
+        "flag": "reinfected",
+        "meters": {
+          "A": -20,
+          "R": -5
+        },
+        "text": "Four minutes after the reboot, the baby camera is infected again. Bots scanning the internet found it still answering to its factory password. Your connection slows to a crawl and the provider's warning returns.",
+        "log": "ROUTER 192.168.1.23 (baby-cam) outbound UDP flood → 198.51.100.0/24"
+      },
+      {
+        "at": 40,
+        "if": {
+          "all": [
+            {
+              "not": {
+                "flag": "segmented"
+              }
+            },
+            {
+              "not": {
+                "flag": "unplugged"
+              }
+            }
+          ]
+        },
+        "flag": "tvInfected",
+        "meters": {
+          "A": -10,
+          "I": -5
+        },
+        "text": "From inside your network, the infected camera scanned its neighbours. The smart TV, still on its factory password, has joined the botnet too.",
+        "log": "ROUTER 192.168.1.31 (smart-tv) new outbound connections to 203.0.113.50:23"
+      }
+    ]
+  },
+  "nodes": {
+    "outage": {
+      "phase": "Detection & Analysis",
+      "title": "Who is flooding the line?",
+      "body": "The router's admin page lists everything on your home network. Next to your laptop and phone are three devices you barely remember: a baby camera from your old flat, a smart TV and a cheap smart plug. Upload traffic is maxed out.",
+      "logs": [
+        {
+          "text": "18:38 ROUTER WAN upload 100% sustained",
+          "type": "hi"
+        },
+        {
+          "text": "18:39 MAIL isp-abuse@provider.example: \"Your IP is participating in a DDoS\"",
+          "type": "warn"
+        },
+        {
+          "text": "18:40 ROUTER clients: laptop, phone, baby-cam, smart-tv, smart-plug",
+          "type": "info"
+        }
+      ],
+      "notes": {
+        "iris": "This is a classic smart-device botnet. They don't want you. They want your camera's bandwidth, to rent out for attacks on someone else.",
+        "echo": "One device opens a connection to the same server every 60 seconds: a heartbeat to its command server. It's the baby camera.",
+        "moritz": "Everything is on one flat network. Whatever happens next, cheap devices should never share a network with your work laptop.",
+        "jayson": "If this is a botnet, someone will try to cash in on your panic next. Expect a \"helpful\" phone call tonight."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Unplug everything from the router and work out the rest later",
+          "short": "Unplugged everything",
+          "effects": {
+            "minutes": 5,
+            "meters": {
+              "A": -10
+            },
+            "points": 4,
+            "set": {
+              "unplugged": true
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "The flood stops, and so does your client call. You still don't know which device was infected.",
+          "why": "Pulling the plug contains the problem quickly, which is not wrong. But without knowing which device was infected, you will plug it back in later and start again. Good containment keeps the information you need."
+        },
+        {
+          "key": "B",
+          "label": "Read the router's traffic logs to find which device is flooding the line",
+          "short": "Checked the router logs",
+          "effects": {
+            "minutes": 10,
+            "evidence": 30,
+            "set": {
+              "culpritFound": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Detection & Analysis",
+            "CIA triad · Availability"
+          ],
+          "note": "One device sends almost all the traffic: the baby camera at 192.168.1.23. You block it at the router and the line recovers.",
+          "why": "Identify the source before you act. Your router can show traffic per device, so ten minutes of analysis tells you exactly what to fix.",
+          "whyDeep": "This is the Detection & Analysis phase of NIST SP 800-61 at home scale: confirm the incident, find its scope and source, then contain with precision instead of guesswork."
+        },
+        {
+          "key": "C",
+          "label": "Call the internet provider and ask them to fix it",
+          "short": "Called the provider",
+          "effects": {
+            "minutes": 30,
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Detection & Analysis"
+          ],
+          "note": "Twenty-five minutes on hold. The provider confirms the attack traffic comes from your line, but they cannot see which device inside your home is sending it.",
+          "why": "The provider sees your connection, not the devices behind your router. The investigation inside your own network is yours to do."
+        },
+        {
+          "key": "D",
+          "if": {
+            "character": "jayson"
+          },
+          "label": "Hack back: trace the botnet's control server and take it down yourself",
+          "short": "Hacked back",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "R": -20
+            },
+            "set": {
+              "hackedBack": true
+            },
+            "points": -10
+          },
+          "tags": [
+            "Law · Unauthorised access"
+          ],
+          "note": "The \"control server\" turns out to be a hacked machine belonging to a small clinic abroad. You have just attacked a second victim, and your own logs prove it.",
+          "why": "Hacking back is illegal in most countries, for example under the UK Computer Misuse Act and the US Computer Fraud and Abuse Act. Attacker infrastructure is often someone else's compromised machine. Report it instead."
+        }
+      ],
+      "next": [
+        {
+          "to": "camera"
+        }
+      ]
+    },
+    "camera": {
+      "phase": "Eradication",
+      "title": "The baby camera",
+      "body": [
+        {
+          "if": {
+            "flag": "culpritFound"
+          },
+          "text": "The culprit is the baby camera. It still uses the factory login printed on the bottom of its box: admin / admin."
+        },
+        {
+          "text": "You test the devices one by one. The baby camera is the one: with it unplugged, the traffic stops. It still uses the factory login printed on its box: admin / admin."
+        }
+      ],
+      "logs": [
+        {
+          "text": "ROUTER baby-cam: telnet port 23 open to the internet (UPnP)",
+          "type": "warn"
+        }
+      ],
+      "choices": [
+        {
+          "key": "A",
+          "label": "Reboot the camera",
+          "short": "Rebooted the camera",
+          "effects": {
+            "minutes": 2,
+            "set": {
+              "rebootOnly": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "OWASP IoT Top 10 · I1 Weak, guessable or hardcoded passwords"
+          ],
+          "note": "The camera restarts and the traffic stops. For now.",
+          "why": "Botnet malware of this kind usually lives only in the device's memory, so a reboot clears it. But the camera comes back with the same factory password, and bots scanning the internet find it again within minutes."
+        },
+        {
+          "key": "B",
+          "label": "Factory reset it, set a strong unique password and install the latest firmware",
+          "short": "Reset, new password, update",
+          "effects": {
+            "minutes": 20,
+            "set": {
+              "cameraSecured": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication",
+            "MITRE ATT&CK T1078.001 · Default Accounts"
+          ],
+          "note": "Fresh firmware, a long new password, and remote access switched off in the settings. The camera is quiet.",
+          "why": "This removes the infection and closes the door it came through: the factory password. Updates fix known flaws. OWASP's IoT Top 10 lists weak or default passwords as risk number one.",
+          "whyDeep": "ETSI EN 303 645, the European baseline for consumer IoT security, bans universal default passwords and calls for devices that can be securely updated. Your old camera predates that standard, so you have to supply both yourself."
+        },
+        {
+          "key": "C",
+          "label": "Take the camera off the network for good",
+          "short": "Removed the camera",
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "cameraSecured": true,
+              "removedCamera": true
+            },
+            "points": 8
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication"
+          ],
+          "note": "The camera goes in a drawer. One less device to worry about.",
+          "why": "If you don't need a device, removing it is the strongest fix: no device, no attack surface. The TV and the plug are still on factory settings, though."
+        }
+      ],
+      "next": [
+        {
+          "to": "laptop"
+        }
+      ]
+    },
+    "laptop": {
+      "phase": "Containment",
+      "title": "The work laptop",
+      "body": "Your work laptop sits on the same home network as the TV, the plug and, until a moment ago, the camera. There is a client deadline tomorrow morning.",
+      "logs": [
+        {
+          "text": "ROUTER one network (SSID home-5G) · 5 clients · guest network: off",
+          "type": "info"
+        }
+      ],
+      "choices": [
+        {
+          "key": "A",
+          "label": "Keep the laptop on the same network. It has antivirus",
+          "short": "Kept one network",
+          "effects": {
+            "minutes": 2,
+            "set": {
+              "laptopExposed": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "Network segmentation"
+          ],
+          "note": "Nothing changes. Your laptop and the cheap devices still share one network.",
+          "why": "Antivirus does not stop an infected device on the same network from scanning or attacking your laptop. Separating them does."
+        },
+        {
+          "key": "B",
+          "label": "Create a guest network for the smart devices and keep the laptop on the main one",
+          "short": "Guest network for smart devices",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "segmented": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "Network segmentation",
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "The TV and the plug move to the guest network. They can still reach the internet, but not your laptop.",
+          "why": "Segmentation limits what a compromised device can reach. A guest network is the home version of what companies do with separate network zones and firewalls.",
+          "whyDeep": "This is the zones-and-conduits idea from IEC 62443 in miniature: group devices by how much you trust them, and control what may cross between the groups."
+        },
+        {
+          "key": "C",
+          "label": "Connect the laptop to your phone's hotspot instead",
+          "short": "Used the phone hotspot",
+          "effects": {
+            "minutes": 3,
+            "set": {
+              "hotspot": true
+            },
+            "points": 6
+          },
+          "tags": [
+            "Network segmentation"
+          ],
+          "note": "The laptop is off the home network tonight. The smart devices still share one network with everything else.",
+          "why": "A sensible short-term workaround, but it avoids the problem instead of fixing it. Tomorrow the laptop will be back on the same network."
+        }
+      ],
+      "next": [
+        {
+          "to": "call"
+        }
+      ]
+    },
+    "call": {
+      "phase": "Recovery",
+      "title": "\"This is technical support\"",
+      "body": [
+        {
+          "if": {
+            "character": "jayson"
+          },
+          "text": "{clock}. Your phone rings. \"Good evening, this is technical support from your internet provider. We detected malware on your network. If you install our remote-access tool, we can clean everything right now.\" Jayson recognises the script within five seconds: urgency, authority, and a remote-access tool."
+        },
+        {
+          "text": "{clock}. Your phone rings. \"Good evening, this is technical support from your internet provider. We detected malware on your network. If you install our remote-access tool, we can clean everything right now.\""
+        }
+      ],
+      "logs": [
+        {
+          "text": "PHONE incoming call +44 20 7946 0xxx \"Provider Support\"",
+          "type": "warn"
+        }
+      ],
+      "choices": [
+        {
+          "key": "A",
+          "label": "Accept. They already know about the attack, so they must be real",
+          "short": "Gave remote access",
+          "effects": {
+            "minutes": 25,
+            "meters": {
+              "C": -25,
+              "I": -15
+            },
+            "set": {
+              "gaveAccess": true
+            },
+            "points": -10
+          },
+          "tags": [
+            "Social engineering · Vishing"
+          ],
+          "note": "The \"technician\" installs a remote-access tool on your work laptop \"to scan it\". The screen flickers while files are opened in the background. By morning, your client folders have been copied.",
+          "why": "Knowing about your problem proves nothing. Scammers time their calls to real events, and some even send the warning themselves. Never give remote access to someone who called you: it puts the device you work on in a stranger's hands."
+        },
+        {
+          "key": "B",
+          "label": "Refuse and hang up",
+          "short": "Hung up",
+          "effects": {
+            "minutes": 1,
+            "points": 6
+          },
+          "tags": [
+            "Social engineering · Vishing"
+          ],
+          "note": "Click. The caller doesn't try again.",
+          "why": "Hanging up keeps you safe. Even better: check with your real provider, and report the call so others can be warned."
+        },
+        {
+          "key": "C",
+          "label": "Hang up and call back on the number from your provider's website or bill",
+          "short": "Called the official number",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "verifiedIsp": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "Social engineering · Out-of-band verification"
+          ],
+          "note": "The real provider confirms the DDoS warning email was genuine, but they never call customers to offer remote cleaning. They log the scam call.",
+          "why": "Out-of-band verification: contact the organisation through a channel you already trust. It also tells you which parts of the story were real."
+        }
+      ],
+      "next": [
+        {
+          "to": "end"
+        }
+      ]
+    }
+  },
+  "endings": [
+    {
+      "if": {
+        "flag": "hackedBack"
+      },
+      "grade": "Outside the law",
+      "tone": "bad",
+      "text": "You attacked a machine you didn't own. Even with good intentions, that is a crime, and it hit a second victim."
+    },
+    {
+      "if": {
+        "flag": "gaveAccess"
+      },
+      "grade": "Handed over the keys",
+      "tone": "bad",
+      "text": "The botnet was annoying. The fake technician was worse: you gave a criminal a remote-control session inside your own home network."
+    },
+    {
+      "if": {
+        "flag": "reinfected"
+      },
+      "grade": "Still in the botnet",
+      "tone": "mixed",
+      "text": "The camera was clean for four minutes. With the factory password still in place, it rejoined the botnet before your tea had cooled."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "cameraSecured"
+          },
+          {
+            "flag": "segmented"
+          },
+          {
+            "flag": "verifiedIsp"
+          }
+        ]
+      },
+      "grade": "Smart home, smart owner",
+      "tone": "good",
+      "text": "Culprit found, door closed, network split, scammer spotted. Your home network is now harder to break into than most small offices."
+    },
+    {
+      "grade": "Back online, still exposed",
+      "tone": "mixed",
+      "text": "The internet works again, but some doors at home are still open."
+    }
+  ],
+  "lessons": [
+    "A home network is an attack surface. Every connected device is a computer someone else may control.",
+    "Change factory passwords and update firmware. A reboot clears botnet malware from memory, but not the open door.",
+    "Put smart devices on a separate guest network, away from your work laptop.",
+    "Your provider can see your connection, not your devices. Investigating inside your network is your job.",
+    "Never give remote access to someone who called you. Call back on a number you already trust."
+  ],
+  "standards": [
+    "CIA triad: Availability",
+    "NIST SP 800-61 (Computer Security Incident Handling Guide)",
+    "OWASP IoT Top 10 (I1: Weak, guessable or hardcoded passwords)",
+    "ETSI EN 303 645 (Cyber security for consumer IoT)",
+    "MITRE ATT&CK: T1078.001 Default Accounts, T1498 Network Denial of Service"
+  ],
+  "whatActuallyHappened": null
+}

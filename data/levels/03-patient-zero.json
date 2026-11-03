@@ -1,0 +1,880 @@
+{
+  "id": "03-patient-zero",
+  "level": 3,
+  "title": "Patient Zero",
+  "tier": "beginner",
+  "lighting": "night",
+  "options": 4,
+  "real": {
+    "dates": "August–December 2022"
+  },
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": {
+    "clock": "21:40",
+    "node": "lessons"
+  },
+  "alarmAt": "23:52",
+  "introChoice": null,
+  "briefing": "Night, at home. Your phone lights up: Keyhaven's key vault has just been opened with your own account. Keyhaven makes a password manager, and you are one of only four engineers who hold the keys to its most critical systems. To understand tonight, go back three weeks, to the evening you closed the first incident.",
+  "attacker": {
+    "activeWhile": {
+      "all": [
+        {
+          "flag": "act2"
+        },
+        {
+          "not": {
+            "flag": "doorClosed"
+          }
+        }
+      ]
+    },
+    "events": [
+      {
+        "at": 0,
+        "if": {
+          "flag": "hardenedAccess"
+        },
+        "flag": "blocked",
+        "because": [
+          "Act 1 lesson: {lesson}"
+        ],
+        "text": "The vault log explains why tonight isn't worse. The attacker typed your password and passed MFA, but the vault refused to release any keys: critical keys only open on hardened company devices, and this was your home PC. The attack stalled at that step.",
+        "log": "23:41 VAULT key export DENIED · device=home-pc not on hardened-device list"
+      },
+      {
+        "at": 0,
+        "if": {
+          "not": {
+            "flag": "hardenedAccess"
+          }
+        },
+        "flag": "keysExposed",
+        "because": [
+          "Act 1 lesson: {lesson}"
+        ],
+        "meters": {
+          "C": -10
+        },
+        "text": "The vault log shows what the attacker took with your account at 23:41: the cloud storage keys and the decryption keys for the customer vault backups. The backups are next.",
+        "log": "23:41 VAULT export ok · cloud-storage-key, backup-decryption-key · device=home-pc"
+      },
+      {
+        "at": 40,
+        "if": {
+          "all": [
+            {
+              "not": {
+                "flag": "hardenedAccess"
+              }
+            },
+            {
+              "not": {
+                "flag": "keysRotated"
+              }
+            },
+            {
+              "not": {
+                "flag": "quickLock"
+              }
+            }
+          ]
+        },
+        "flag": "backupsCopied",
+        "meters": {
+          "C": -25,
+          "R": -10
+        },
+        "text": "Using the stolen storage keys, the attacker finishes copying the customer vault backups.",
+        "log": "CLOUD bucket vault-backups: 100% downloaded by 198.51.100.66"
+      },
+      {
+        "at": 30,
+        "if": {
+          "all": [
+            {
+              "not": {
+                "flag": "hardenedAccess"
+              }
+            },
+            {
+              "flag": "keysRotated"
+            },
+            {
+              "not": {
+                "flag": "doorClosed"
+              }
+            }
+          ]
+        },
+        "flag": "backupsCopied",
+        "meters": {
+          "C": -25,
+          "R": -10
+        },
+        "text": "Your new keys didn't help for long. Still logged in as you, the attacker read them straight from the vault and finished copying the customer vault backups.",
+        "log": "VAULT read user=you item=backup-decryption-key (new) · device=home-pc"
+      },
+      {
+        "at": 45,
+        "if": {
+          "all": [
+            {
+              "flag": "hardenedAccess"
+            },
+            {
+              "not": {
+                "flag": "quickLock"
+              }
+            }
+          ]
+        },
+        "flag": "inboxRead",
+        "meters": {
+          "C": -10
+        },
+        "text": "Locked out of the vault, the attacker settles for what your password still opens: your work email and the team chat.",
+        "log": "MAIL login user=you ip=198.51.100.66 · 312 messages read"
+      }
+    ]
+  },
+  "nodes": {
+    "lessons": {
+      "act": "Act 1 · Three weeks earlier",
+      "phase": "Post-Incident Activity",
+      "title": "Closing the first incident",
+      "body": "Three weeks ago, an attacker got into Keyhaven's development environment through one developer's account and copied part of the source code and some technical documents. No customer data was touched, and the incident is closed. Tonight you write the last section of the closing report: which lesson should the company act on?",
+      "logs": [
+        {
+          "text": "CASE-0412 dev environment intrusion · status: closing",
+          "type": "info"
+        },
+        {
+          "text": "CASE-0412 taken: source code (partial), internal technical docs",
+          "type": "warn"
+        }
+      ],
+      "notes": {
+        "iris": "Attackers who steal source code and internal documents are usually shopping for the next target. Write this report as if they're coming back.",
+        "echo": "The intruder's commands show they read the docs about who manages the backups. Nobody has asked why yet.",
+        "moritz": "The real question isn't which password leaked. It's why one person's account was enough to reach anything valuable.",
+        "jayson": "If I'd stolen this source code, my next move would be the people listed in it. Especially the ones with the keys."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Critical keys may only be used from dedicated, hardened company devices",
+          "short": "Hardened devices for critical keys",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "act2": true,
+              "hardenedAccess": true
+            },
+            "setVar": {
+              "lesson": "Hardened devices for critical keys"
+            },
+            "points": 10
+          },
+          "tags": [
+            "CIS Controls v8 · 12.8 Dedicated admin devices",
+            "Privileged access"
+          ],
+          "note": "The rule is approved. Some engineers grumble about carrying a second laptop.",
+          "why": "The first attacker came in through one person's account. The most valuable keys deserve the most protected devices: if they only open on hardened company machines, a stolen password typed anywhere else is not enough."
+        },
+        {
+          "key": "B",
+          "label": "Make every developer change their password",
+          "short": "Rotated developer passwords",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "act2": true
+            },
+            "setVar": {
+              "lesson": "Rotated developer passwords"
+            },
+            "points": 5
+          },
+          "tags": [
+            "NIST SP 800-61 · Post-Incident Activity"
+          ],
+          "note": "Every developer gets a new password. It takes a day of help-desk tickets.",
+          "why": "Sensible hygiene after a breach, but it fixes the last attack, not the next one. A new password can be stolen the same way as the old one."
+        },
+        {
+          "key": "C",
+          "label": "Collect more logs from the development environment",
+          "short": "More logging",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "act2": true
+            },
+            "setVar": {
+              "lesson": "More logging"
+            },
+            "points": 5
+          },
+          "tags": [
+            "NIST SP 800-61 · Post-Incident Activity"
+          ],
+          "note": "New logging is switched on. The dashboards look busier.",
+          "why": "Better logs help you notice the next attack sooner. They don't stop it."
+        },
+        {
+          "key": "D",
+          "label": "Close the report with no changes: nothing important was taken",
+          "short": "No changes",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "act2": true
+            },
+            "setVar": {
+              "lesson": "No changes"
+            },
+            "points": 0
+          },
+          "tags": [
+            "NIST SP 800-61 · Post-Incident Activity"
+          ],
+          "note": "The case is closed. Everyone moves on.",
+          "why": "Source code and internal documents are a map for the next attack. \"Nothing important was taken\" is how a second incident starts."
+        }
+      ],
+      "next": [
+        {
+          "to": "machine"
+        }
+      ]
+    },
+    "machine": {
+      "act": "Act 2 · Tonight",
+      "newScene": true,
+      "clockAt": "23:52",
+      "phase": "Detection & Analysis",
+      "title": "Patient zero",
+      "body": "{clock}. The alarm: Keyhaven's key vault was opened with your own account, and the sign-in passed MFA. As the investigation digs in, the truth comes out. The media server software on your home computer hasn't been updated in two years, and there is a keylogger on the machine. What you typed, including your vault password, went to the attacker. Patient zero is you.",
+      "logs": [
+        {
+          "text": "23:41 VAULT sign-in ok user=you device=home-pc mfa=passed",
+          "type": "warn"
+        },
+        {
+          "text": "23:47 EDR home-pc: unknown process recording keystrokes",
+          "type": "hi"
+        },
+        {
+          "text": "23:49 home-pc media server: last update 2 years ago · known remote-code flaw",
+          "type": "warn"
+        },
+        {
+          "if": {
+            "character": "echo"
+          },
+          "text": "ECHO memory scan: keylogger uploads to a second address, 203.0.113.77:443 · still live",
+          "type": "hi"
+        }
+      ],
+      "notes": {
+        "iris": "Weeks of patience, a stolen map of your systems, then one engineer's home PC. This is a planned operation aimed at what your vault protects, not at you.",
+        "echo": "Echo's extra clue: the keylogger reports to a second address nobody has spotted yet. A forensic image would keep it as evidence.",
+        "moritz": "Your home PC and the company's most valuable keys were one password apart. That's an architecture problem, not only a keylogger problem.",
+        "jayson": "If I were them, I'd have copied whatever that vault holds the moment I got in. Next, they'll use it."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Wipe the computer and reinstall it right now",
+          "short": "Wiped the computer",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "wiped": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-61 · Evidence gathering",
+            "MITRE ATT&CK T1056.001 · Keylogging"
+          ],
+          "note": "Clean in fifteen minutes. Gone with it: the keylogger, its settings, and every trace of where your keystrokes went.",
+          "why": "Wiping first destroys the evidence that tells you what was taken and where it went. NIST SP 800-61 asks you to gather and preserve evidence before you clean up."
+        },
+        {
+          "key": "B",
+          "label": "Disconnect it from the network, then take a forensic image before touching anything else",
+          "short": "Isolated, then forensic image",
+          "effects": {
+            "minutes": 30,
+            "evidence": 40,
+            "set": {
+              "imaged": true
+            },
+            "points": 10
+          },
+          "characterEffects": {
+            "echo": {
+              "evidence": 20,
+              "note": "Echo's extra clue: the keylogger's second upload address goes into the evidence. Evidence +20."
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "MITRE ATT&CK T1056.001 · Keylogging"
+          ],
+          "note": "The keylogger goes silent. The image keeps its configuration, its upload address and the timeline of what it recorded.",
+          "why": "Isolate to stop the leak, image to keep the evidence. The image shows what was typed while the keylogger ran, which tells you which secrets must change.",
+          "whyDeep": "RFC 3227, the classic guideline for evidence collection, says to collect in order of volatility: memory before disk, because memory is lost when the machine powers off."
+        },
+        {
+          "key": "C",
+          "label": "Disconnect it from the network and leave it as it is",
+          "short": "Disconnected and left it",
+          "effects": {
+            "minutes": 5,
+            "evidence": 10,
+            "points": 5
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "The keylogger can't send anything now. The machine sits on your desk, waiting for someone to decide what to do with it.",
+          "why": "Disconnecting is the right first step, and it keeps memory intact. But without an image, the evidence is one reboot or one power cut away from being lost."
+        },
+        {
+          "key": "D",
+          "label": "Keep using it normally so you can watch what the attacker does",
+          "short": "Kept using it to watch",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "C": -5
+            },
+            "set": {
+              "watched": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "MITRE ATT&CK T1056.001 · Keylogging"
+          ],
+          "note": "For twenty minutes, every key you press goes straight to the attacker, including the password you type to check your email.",
+          "why": "Specialists sometimes watch an attacker, but on a controlled machine. Here the keylogger is still recording, so you are feeding the attacker fresh secrets."
+        }
+      ],
+      "next": [
+        {
+          "to": "keys"
+        }
+      ]
+    },
+    "keys": {
+      "act": "Act 2 · Tonight",
+      "phase": "Containment",
+      "title": "Which keys first?",
+      "body": "{clock}. Your vault password is burned. Your vault holds the keys that matter most: the cloud storage keys and the decryption keys for the customer vault backups. You can't change everything in the same minute. What goes first?",
+      "notes": {
+        "jayson": "They'll keep watching that vault. Change the keys while they still have your account and they'll just read the new ones.",
+        "moritz": "Secrets are only as safe as the device that types them. Make every change from a clean machine."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "The backup decryption keys and the cloud storage keys",
+          "short": "Backup keys first",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "keysRotated": true
+            },
+            "points": 5
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication"
+          ],
+          "note": [
+            {
+              "if": {
+                "flag": "hardenedAccess"
+              },
+              "text": "New keys in fifteen minutes. The vault never released the old ones, so this was a precaution. Your account is still open."
+            },
+            {
+              "text": "New keys in fifteen minutes, and the copied ones stop working. But your account is still open."
+            }
+          ],
+          "why": "Changing the keys is necessary, but your account is the door to the vault. While the attacker can still sign in as you, they can read the new keys as soon as you create them."
+        },
+        {
+          "key": "B",
+          "label": "Your own account: new password, all sessions revoked, done from a clean device",
+          "short": "Own account first, from a clean device",
+          "effects": {
+            "minutes": 15,
+            "set": {
+              "doorClosed": true,
+              "quickLock": true,
+              "keysRotated": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "MITRE ATT&CK T1078 · Valid Accounts"
+          ],
+          "note": "From a borrowed company laptop, you change your vault password, revoke every session and set up MFA again. Then the backup keys, in that order. The attacker loses the door first, then the keys.",
+          "why": "Close the door before you change the locks. Your account opens the vault, so it goes first, and the change must be made from a clean device: anything typed on the infected PC goes to the attacker.",
+          "whyDeep": "In NIST SP 800-61 terms this is containment before eradication: cut off the attacker's current access, then remove what they could reach. Credentials changed from a compromised host should be treated as compromised too."
+        },
+        {
+          "key": "C",
+          "label": "Every team member's account",
+          "short": "All team accounts",
+          "effects": {
+            "minutes": 35,
+            "set": {
+              "doorClosed": true
+            },
+            "points": 4
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "Thirty-five minutes of resetting forty accounts. Yours is in the middle of the list.",
+          "why": "The other accounts weren't compromised. Starting broad spends the minutes that matter most while the one account that is compromised stays open."
+        },
+        {
+          "key": "D",
+          "label": "Everything at once: every account and every key",
+          "short": "Everything at once",
+          "effects": {
+            "minutes": 45,
+            "meters": {
+              "A": -10
+            },
+            "set": {
+              "doorClosed": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "It takes forty-five minutes, and several services break while their keys change. The attacker uses every one of those minutes.",
+          "why": "Changing everything at once sounds thorough, but it is slow and it breaks things. Priorities matter: the compromised account first, then the secrets it could reach."
+        }
+      ],
+      "next": [
+        {
+          "to": "disclose"
+        }
+      ]
+    },
+    "disclose": {
+      "act": "Act 2 · Tonight",
+      "phase": "Post-Incident Activity",
+      "title": "Telling the customers",
+      "body": [
+        {
+          "if": {
+            "flag": "backupsCopied"
+          },
+          "text": "{clock}. The logs confirm it: the attacker copied the customer vault backups. The passwords inside are encrypted with each customer's master password, but website addresses are not, and a weak master password can be guessed offline, given time. Customers trust Keyhaven with everything. What do you tell them?"
+        },
+        {
+          "if": {
+            "flag": "hardenedAccess"
+          },
+          "text": "{clock}. The customer vault backups never left: the vault refused to hand over the keys. Still, the attacker had your password, passed your MFA and, three weeks ago, took source code. Customers will hear about it. What do you tell them?"
+        },
+        {
+          "text": "{clock}. The logs show the attacker started copying the customer vault backups before the keys changed. How much left is still unclear. Customers trust Keyhaven with everything. What do you tell them?"
+        }
+      ],
+      "notes": {
+        "iris": "There's a way to disclose this that nobody will notice. I'm not saying it's right. I'm saying it exists."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Tell every customer at once and clearly: what was taken, what it means, what to do",
+          "short": "Told everyone, clearly",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "R": -5
+            },
+            "set": {
+              "toldAll": true
+            },
+            "points": 10
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz struggles to explain this to non-technical customers: Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "GDPR Art. 33–34 · Breach notification",
+            "NIST SP 800-61 · Post-Incident Activity"
+          ],
+          "note": "The notice is plain: what happened, which data, what is encrypted and what is not, and that customers with weak master passwords should change them and the passwords they store. It hurts. It is also believed.",
+          "why": "Clear, complete and early disclosure lets customers protect themselves. It's also what GDPR expects: tell the authority within 72 hours, and tell people directly when the risk to them is high."
+        },
+        {
+          "key": "B",
+          "label": "Share it piece by piece as you learn more",
+          "short": "Piece by piece",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -15
+            },
+            "points": 3
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz struggles to explain this to non-technical customers: Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "GDPR Art. 33–34 · Breach notification"
+          ],
+          "note": "Each update adds something worse than the last. Customers start to wonder what's still hidden.",
+          "why": "Updating people as you learn is fine. Releasing the bad parts slowly is not: each new surprise costs more trust than the full story would have."
+        },
+        {
+          "key": "C",
+          "label": "Tell only the biggest business customers",
+          "short": "Told only big customers",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": -20
+            },
+            "set": {
+              "selective": true
+            },
+            "points": 1
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz struggles to explain this to non-technical customers: Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "GDPR Art. 33–34 · Breach notification"
+          ],
+          "note": "Two days later, the news leaks from a business customer's IT team. Everyone else learns it from the press.",
+          "why": "Every affected customer has the same right to protect themselves. Selective disclosure leaks, and then it looks like a cover-up."
+        },
+        {
+          "key": "D",
+          "label": "Say nothing publicly",
+          "short": "Said nothing",
+          "effects": {
+            "minutes": 5,
+            "meters": {
+              "R": -30
+            },
+            "set": {
+              "silent": true
+            },
+            "points": -10
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz struggles to explain this to non-technical customers: Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "GDPR Art. 33–34 · Breach notification"
+          ],
+          "note": "Three weeks later, a security researcher publishes the story. The headline says Keyhaven hid it.",
+          "why": "Customers can't change passwords they don't know are at risk. Staying silent also breaks data-protection law in many places, including under GDPR."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "iris"
+          },
+          "label": "Publish a short notice late on the day before the holidays, when few people read the news",
+          "short": "Buried it before the holidays",
+          "effects": {
+            "minutes": 5,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "buried": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "GDPR Art. 33–34 · Breach notification"
+          ],
+          "note": "A quiet holiday, as planned. In January, journalists put the timing in the headline.",
+          "why": "Technically, you disclosed. But timing a notice so nobody reads it is still hiding it, and people notice. Iris's shortcut works for a week and costs trust for years."
+        }
+      ],
+      "next": [
+        {
+          "to": "owned"
+        }
+      ]
+    },
+    "owned": {
+      "act": "Act 2 · Tonight",
+      "phase": "Post-Incident Activity",
+      "title": "Your own mistake",
+      "body": "One question is left, and it's the hardest. The investigation report needs a root cause. The root cause is your home media server, two years without updates. Nobody else knows that yet.",
+      "choices": [
+        {
+          "key": "A",
+          "label": "Report it openly, home server included",
+          "short": "Reported my own mistake",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "R": 5
+            },
+            "set": {
+              "ownedIt": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "Blameless post-incident review",
+            "NIST SP 800-61 · Post-Incident Activity"
+          ],
+          "note": "Your manager is quiet for a long moment. Then: \"Thank you. Now we can fix this for all four of you.\" From tomorrow, personal devices are cut off from critical access.",
+          "why": "The root cause is what prevents the next incident. Hiding it protects you for a week and leaves the hole open for everyone. Blameless reviews exist so people can say exactly this."
+        },
+        {
+          "key": "B",
+          "label": "Report it, but leave out the home server",
+          "short": "Left out the home server",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "partialTruth": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-61 · Post-Incident Activity"
+          ],
+          "note": "The report says \"an engineer's device was compromised\". Nobody checks the other engineers' home setups.",
+          "why": "A root-cause report without the cause is a report nobody can learn from. The same hole stays open on the other engineers' machines."
+        },
+        {
+          "key": "C",
+          "label": "Quietly update the server and say nothing",
+          "short": "Patched quietly, said nothing",
+          "effects": {
+            "minutes": 5,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "coveredUp": true
+            },
+            "points": -10
+          },
+          "tags": [
+            "NIST SP 800-61 · Post-Incident Activity"
+          ],
+          "note": [
+            {
+              "if": {
+                "flag": "wiped"
+              },
+              "text": "Nobody can prove it now: you wiped the evidence yourself. But you know, and the same risk sits on three other engineers' home networks."
+            },
+            {
+              "text": "Updated in five minutes. A month later, the forensic team finds the old version in the evidence anyway."
+            }
+          ],
+          "why": "Covering up turns a mistake into misconduct, and it leaves the same risk on every other engineer's home network."
+        },
+        {
+          "key": "D",
+          "label": "Tell your manager, off the record only",
+          "short": "Told the manager off the record",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "offRecord": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-61 · Post-Incident Activity"
+          ],
+          "note": "Your manager nods and promises it stays between you. The official report says \"root cause unknown\".",
+          "why": "Off the record means off the report. An organisation can't fix what it doesn't officially know."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "echo"
+          },
+          "label": "Finish your own analysis first, and report only when every detail is certain",
+          "short": "Kept it to myself until certain",
+          "effects": {
+            "minutes": 60,
+            "set": {
+              "lateReport": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Post-Incident Activity"
+          ],
+          "note": "Three days later your analysis is perfect. Meanwhile the team chased the wrong lead, and the other engineers' home machines stayed unchecked.",
+          "why": "Echo's habit: share nothing until it's perfect. In an incident, a confirmed root cause shared early beats a perfect one shared late."
+        }
+      ],
+      "next": [
+        {
+          "to": "end"
+        }
+      ]
+    }
+  },
+  "endings": [
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "backupsCopied"
+          },
+          {
+            "any": [
+              {
+                "flag": "coveredUp"
+              },
+              {
+                "flag": "silent"
+              }
+            ]
+          }
+        ]
+      },
+      "grade": "Rooted",
+      "tone": "bad",
+      "text": "The attacker has the customer backups, and the truth stayed buried. Somewhere, someone is slowly guessing master passwords, and Keyhaven won't even admit it happened."
+    },
+    {
+      "if": {
+        "any": [
+          {
+            "flag": "coveredUp"
+          },
+          {
+            "flag": "silent"
+          }
+        ]
+      },
+      "grade": "Cover-up",
+      "tone": "bad",
+      "text": "The attack was contained, but you hid part of what happened. When it comes out, and it will, the cover-up becomes the story."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "not": {
+              "flag": "backupsCopied"
+            }
+          },
+          {
+            "flag": "toldAll"
+          },
+          {
+            "flag": "ownedIt"
+          }
+        ]
+      },
+      "grade": "Patient zero, owned",
+      "tone": "good",
+      "text": "You were the way in, and you said so. The door closed fast, customers got the truth, and the hole is now closed for every engineer, not just you."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "backupsCopied"
+          },
+          {
+            "flag": "ownedIt"
+          }
+        ]
+      },
+      "grade": "Honest but bruised",
+      "tone": "mixed",
+      "text": "The backups were taken, and that will hurt for years. But you told the truth about how, so the same door won't open twice."
+    },
+    {
+      "grade": "Contained with damage",
+      "tone": "mixed",
+      "text": "The attacker is out, but parts of the response, or of the story, were left half done."
+    }
+  ],
+  "lessons": [
+    "An attack on a company can start on one person's home computer. Keep every device that touches work updated.",
+    "The most valuable keys deserve the most protected devices, used for nothing else.",
+    "Isolate first, preserve evidence second, clean up third.",
+    "Close the door before you change the locks: secure the compromised account from a clean device, then rotate the secrets it could reach.",
+    "Tell customers clearly and early. Drip-fed or hidden bad news costs more trust than the truth.",
+    "Owning your mistake is how the organisation fixes it for everyone.",
+    "Lessons learned after one incident shape how the next one goes."
+  ],
+  "standards": [
+    "NIST SP 800-61 (Computer Security Incident Handling Guide)",
+    "RFC 3227 (Guidelines for Evidence Collection and Archiving)",
+    "CIS Controls v8: Safeguard 12.8, dedicated computing resources for administrative work",
+    "GDPR Articles 33 and 34 (personal data breach notification)",
+    "MITRE ATT&CK: T1190 Exploit Public-Facing Application, T1056.001 Keylogging, T1078 Valid Accounts"
+  ],
+  "whatActuallyHappened": {
+    "title": "What actually happened…",
+    "paragraphs": [
+      "In August 2022, the password manager LastPass announced that someone had accessed portions of its development environment through a single compromised developer account, and had taken portions of source code and technical information. In September, the company said there was no evidence that customer data or encrypted password vaults had been accessed.",
+      "It was not over. On November 30, LastPass reported unusual activity in a third-party cloud storage service it shared with its affiliate GoTo. The attacker had used information stolen in the first incident to go after one of only four DevOps engineers with access to the decryption keys for the company's cloud backups.",
+      "The way in was that engineer's home computer. It ran Plex, a media server package with a known flaw (CVE-2020-5741) that Plex had fixed in May 2020. Plex later said the employee had never upgraded the software. The attacker used the flaw to plant a keylogger and captured the engineer's master password as it was typed, after MFA had been completed. That opened the engineer's corporate vault, and with it the keys to the backups.",
+      "On December 22, 2022, LastPass disclosed that a backup of customer vault data had been copied. Usernames, passwords, secure notes and form data were encrypted with 256-bit AES and can only be decrypted with a key derived from each user's master password. Website URLs were not encrypted. Basic account information was taken too: names, billing and email addresses, phone numbers and IP addresses.",
+      "The attacker had been active from August 12 to October 26, 2022. The detailed account of the second attack, including the engineer's home computer, was published in late February and early March 2023, about six months after the first notice.",
+      "Keyhaven and everything you decided in this level are fictional. The pattern is real: one unpatched program on one home computer became the way into a company that people trusted with all of their passwords."
+    ],
+    "sources": [
+      {
+        "label": "LastPass: Notice of recent security incident (August 2022, updated through December 2022)",
+        "url": "https://blog.lastpass.com/posts/2022/12/notice-of-recent-security-incident"
+      },
+      {
+        "label": "The Hacker News: LastPass reveals second attack (February 2023)",
+        "url": "https://thehackernews.com/2023/02/lastpass-reveals-second-attack.html"
+      },
+      {
+        "label": "The Hacker News: LastPass hack and the engineer's unpatched Plex software (March 2023)",
+        "url": "https://thehackernews.com/2023/03/lastpass-hack-engineers-failure-to.html"
+      }
+    ]
+  }
+}

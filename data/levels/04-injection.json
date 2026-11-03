@@ -1,0 +1,819 @@
+{
+  "id": "04-injection",
+  "level": 4,
+  "title": "Injection at Checkout",
+  "tier": "intermediate",
+  "lighting": "day",
+  "options": 4,
+  "real": null,
+  "license": "CC BY-NC-SA 4.0 — © 2026 Dilan",
+  "start": {
+    "clock": "10:05",
+    "node": "logpuzzle"
+  },
+  "alarmAt": "10:02",
+  "introChoice": null,
+  "briefing": "Your first weeks at Brightline Security, a firm that runs security for other companies. Morning at the office. One of your clients, the sneaker shop Stridewell, is three hours into the biggest flash sale of its year. Then the shop's web application firewall starts sending alerts.",
+  "attacker": {
+    "activeWhile": {
+      "not": {
+        "any": [
+          {
+            "flag": "blocked"
+          },
+          {
+            "flag": "patched"
+          }
+        ]
+      }
+    },
+    "events": [
+      {
+        "at": 20,
+        "flag": "dbRead",
+        "meters": {
+          "C": -10
+        },
+        "text": "The database monitor lights up: the product database is answering far more queries than any shopper could cause. Some of the injection attempts are getting answers.",
+        "log": "DB monitor · Unusual query volume from the web app account (x40 baseline)"
+      },
+      {
+        "at": 40,
+        "flag": "webshell",
+        "meters": {
+          "I": -15
+        },
+        "text": "File integrity monitoring flags something new: a file in the uploads folder, written by the web server's own account, that is not an image. Its contents were quarantined. Whoever wrote it no longer needs the injection flaw to get back in.",
+        "log": "File integrity · New file in /uploads/ created by the web-server account · not an image type · [contents quarantined]"
+      },
+      {
+        "onEnter": "pci",
+        "if": {
+          "any": [
+            {
+              "all": [
+                {
+                  "flag": "webshell"
+                },
+                {
+                  "not": {
+                    "flag": "scanned"
+                  }
+                }
+              ]
+            },
+            {
+              "all": [
+                {
+                  "not": {
+                    "flag": "blocked"
+                  }
+                },
+                {
+                  "not": {
+                    "flag": "patched"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "flag": "skimmed",
+        "meters": {
+          "C": -30,
+          "R": -20
+        },
+        "money": 64000,
+        "text": "Three days on, page integrity monitoring flags a change nobody deployed: the checkout page now loads a script from an unfamiliar domain, and browser reports show the payment form being sent there on submit. The way back in was never closed. Estimated cost of fraud, forensics and card replacement: $64,000.",
+        "log": "Page integrity · Checkout page changed outside any deployment window · new external script reference: pay-metrics[.]example"
+      }
+    ]
+  },
+  "nodes": {
+    "logpuzzle": {
+      "phase": "Detection & Analysis",
+      "title": "Find the signal",
+      "body": "{clock}. The WAF says \"SQL injection\", but in the middle of a flash sale the logs are a flood. Before anyone touches the shop, you need to know which traffic is the attack. You pull four request clusters from the last five minutes. The attack text itself is redacted: you don't need it. Look at the signals.",
+      "logs": [
+        {
+          "text": "10:02 WAF · Rule \"SQL injection – generic\" matched 214 times from 192.0.2.66 · mode: DETECT ONLY (not blocking)",
+          "type": "hi"
+        },
+        {
+          "text": "10:05 Ops · Flash sale traffic: 3,800 active carts",
+          "type": "info"
+        }
+      ],
+      "notes": {
+        "iris": "A shoe shop, a flash sale, a payment page. Whoever this is wants card data, not the product list. They picked the hour when nobody dares to touch the site.",
+        "echo": "Look at the shape of the traffic, not the words. Shoppers are messy and slow. Tools are fast and repetitive.",
+        "moritz": "Ask what each field is supposed to hold. When the input doesn't match the design, the design is being tested.",
+        "jayson": "If I were testing this shop, I'd hit one page, from one box, as fast as it would let me. Find the one that looks like me."
+      },
+      "puzzle": {
+        "prompt": "Which request cluster is the attack? Pick one line.",
+        "lines": [
+          {
+            "text": "09:58:02 203.0.113.24 GET /cart 200 · 12 requests in 60s · UA: mobile browser",
+            "why": "A normal shopper during a sale: a phone, successful responses, and a handful of requests to the cart."
+          },
+          {
+            "text": "10:01:17 198.51.100.7 GET /search?q=running+shoes 200 · 3 requests",
+            "why": "An ordinary search: short, readable input, three requests, all answered normally."
+          },
+          {
+            "text": "10:02:11 192.0.2.66 GET /product?id=[REDACTED – 412-char input] 500 · 214 requests in 60s · UA: [automated tool signature]",
+            "correct": true
+          },
+          {
+            "text": "10:02:40 203.0.113.90 POST /login 401 · 3 attempts",
+            "why": "A customer mistyping a password: three failed logins is normal. A password attack would be many more attempts, usually across many accounts."
+          }
+        ],
+        "points": 10,
+        "maxMisses": 2,
+        "missMinutes": 10,
+        "missPenalty": 4,
+        "missShort": "Misread the logs",
+        "effects": {
+          "minutes": 5
+        },
+        "short": "Spotted the attack cluster",
+        "revealedShort": "Needed the answer shown",
+        "note": "You flag 192.0.2.66. One address, one endpoint, and a burst of server errors. Now you know exactly what to contain.",
+        "revealedNote": "A colleague leans over and points at the 192.0.2.66 line. The minutes you spent on the other clusters were minutes the attack kept running.",
+        "why": "One IP, one endpoint, very long input in a field that normally holds a short number, a burst of server errors and an automated user-agent. Together those signals match the OWASP injection pattern. The actual input is redacted because the defender does not need it.",
+        "whyDeep": "OWASP lists injection as A03 in its Top 10 (2021). In MITRE ATT&CK terms this is T1190, Exploit Public-Facing Application. Defenders find it by anomalies (error rate, input length, request rate, user-agent), which is also how a WAF rule decides what to flag.",
+        "tags": [
+          "OWASP Top 10 · A03 Injection",
+          "MITRE ATT&CK T1190 · Exploit Public-Facing Application",
+          "NIST SP 800-61 · Detection & Analysis"
+        ]
+      },
+      "consult": {
+        "iris": {
+          "hint": "Attackers don't shop. Look for the line with no interest in shoes.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Count, then compare. One line has twenty times more requests than any other, and every one of them fails.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "A product ID is a short number by design. Any line where that field holds hundreds of characters is outside the design.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Real customers use phones and browsers. Tools announce themselves in the user-agent if you look.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "contain"
+        }
+      ]
+    },
+    "contain": {
+      "phase": "Containment",
+      "title": "Mid-sale",
+      "body": "{clock}. Confirmed: one address is hammering the product page with injection attempts, and the WAF is only taking notes. 3,800 carts are open. Stridewell's marketing lead is on the phone: \"Whatever you do, don't kill the sale.\"",
+      "notes": {
+        "iris": "This is a card-theft crew, not a vandal. They'll want a foothold that survives your fix. Assume they're in a hurry.",
+        "echo": "Echo's extra clue: before the burst, the same address asked twice for /uploads/. Someone is checking where the server lets them write files.",
+        "moritz": "The WAF is already in place. It just isn't allowed to block. That's a configuration decision, not a missing technology.",
+        "jayson": "If I were them, once the database answers, I'd leave something on the server so I never need this door again. You have maybe half an hour."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Take the whole site offline until it's fixed",
+          "short": "Took the site offline",
+          "effects": {
+            "minutes": 15,
+            "meters": {
+              "A": -40,
+              "R": -5
+            },
+            "money": 21000,
+            "set": {
+              "blocked": true,
+              "siteDown": true
+            },
+            "points": 6
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "CIA triad · Availability"
+          ],
+          "note": "The sale stops mid-checkout, and the attack stops with it. Thousands of carts are abandoned: about $21,000 in lost sales. The client's phone starts ringing.",
+          "why": "It stops the attack completely, so it is a safe choice. But availability is part of security too. A targeted control could have kept honest shoppers buying while shutting out the attacker."
+        },
+        {
+          "key": "B",
+          "label": "Switch the WAF rule to blocking and block the attacking address (a virtual patch)",
+          "short": "WAF virtual patch",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "blocked": true
+            },
+            "points": 10
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment",
+            "PCI DSS v4.0 · Req. 6.4 Public-facing web apps"
+          ],
+          "note": "Within a minute the server errors stop. The sale keeps running. The flaw is still in the code, but the WAF now stands in front of it.",
+          "why": "A virtual patch blocks the attack at the edge while the real fix is prepared. It contains the incident without taking honest customers offline. A WAF that only detects is a camera, not a lock.",
+          "whyDeep": "PCI DSS v4.0 Requirement 6.4.2 asks for an automated technical solution in front of public-facing web applications that continually detects and prevents web-based attacks. A rule left in detect-only mode meets the first word but not the second."
+        },
+        {
+          "key": "C",
+          "label": "Keep the site up and watch the logs closely",
+          "short": "Kept it up and watched",
+          "effects": {
+            "minutes": 30,
+            "set": {
+              "watched": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "You watch for half an hour. The errors keep coming, then thin out. In these logs, fewer errors is not good news.",
+          "why": "Monitoring is not containment. While you watch, every request is another attempt against a live flaw, and the WAF only writes it down."
+        },
+        {
+          "key": "D",
+          "label": "Disable only the checkout page",
+          "short": "Disabled checkout only",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "A": -20
+            },
+            "money": 9000,
+            "set": {
+              "checkoutOff": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-61 · Containment"
+          ],
+          "note": "Sales stop, about $9,000 lost. The attack doesn't: the requests were never aimed at checkout. They hit the product page.",
+          "why": "Containment has to target where the attack is. The injection is on /product, so closing checkout costs sales without touching it. Read the logs before you choose the cut."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "jayson"
+          },
+          "label": "Hack back: probe the attacking address and knock it offline",
+          "short": "Hacked back",
+          "effects": {
+            "minutes": 20,
+            "meters": {
+              "R": -20
+            },
+            "set": {
+              "hackedBack": true
+            },
+            "points": -10
+          },
+          "tags": [
+            "Law · Unauthorised access"
+          ],
+          "note": "192.0.2.66 turns out to be a small design studio's hijacked server. You have just attacked a second victim, from Brightline's own network, and the injection attempts simply move to a new address.",
+          "why": "Hacking back is illegal in most countries, for example under the UK Computer Misuse Act and the US Computer Fraud and Abuse Act. Attack traffic usually comes from someone else's compromised machine. Block, preserve evidence and report it instead."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "The marketing lead will forgive a slow page. Nobody forgives stolen cards. Stop the attacker first, then argue about the sale.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "The attack has one source and one target. You don't need a sledgehammer for a single nail.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Containment should be as narrow as the attack. You already have a control in front of the site: change what it does.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Every minute it stays open, they get closer to planting something. Don't watch them work.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "hotfix"
+        }
+      ]
+    },
+    "hotfix": {
+      "phase": "Eradication",
+      "title": "The twenty-minute fix",
+      "body": [
+        {
+          "if": {
+            "flag": "webshell"
+          },
+          "text": "{clock}. The client's developer has a fix: the product ID field will only accept numbers, and the database query will use parameters. It was written in twenty minutes and nobody has tested it. \"Push it now,\" says Stridewell. And there's still that file-integrity alert about the uploads folder."
+        },
+        {
+          "text": "{clock}. The client's developer has a fix: the product ID field will only accept numbers, and the database query will use parameters. It was written in twenty minutes and nobody has tested it. \"Push it now,\" says Stridewell."
+        }
+      ],
+      "notes": {
+        "iris": "Card-theft crews rarely leave through the door they came in. They leave a second one open for later.",
+        "echo": "Echo's extra clue: the web server account wrote to disk this morning. It almost never does. That's worth a look before anyone calls this closed.",
+        "moritz": "Parameterised queries are the right fix. An untested change in production is the wrong way to deliver it.",
+        "jayson": "If I'd got in, I wouldn't care about your patch. I'd already have my own way back."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Push the untested fix to production now",
+          "short": "Pushed the untested fix",
+          "effects": {
+            "minutes": 10,
+            "meters": {
+              "A": -15
+            },
+            "money": 6000,
+            "set": {
+              "patched": true,
+              "hotfixBroke": true
+            },
+            "points": 3
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication",
+            "PCI DSS v4.0 · Req. 6.5 Change management"
+          ],
+          "note": "The injection is closed. So is part of the catalogue: older product pages use IDs with letters in them, and they now show errors at the busiest hour of the sale. About $6,000 in lost orders before it's rolled forward.",
+          "why": "Fixing fast is good; fixing blind isn't. An untested change in the middle of an incident can cause a second outage. Changes to production are reviewed and tested first, and with the attack contained you have the time."
+        },
+        {
+          "key": "B",
+          "label": "Test the fix in staging first, then release it",
+          "short": "Tested, then released",
+          "effects": {
+            "minutes": 60,
+            "set": {
+              "patched": true
+            },
+            "points": 5
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication",
+            "PCI DSS v4.0 · Req. 6.5 Change management"
+          ],
+          "note": [
+            {
+              "if": {
+                "flag": "blocked"
+              },
+              "text": "An hour later the fix passes its tests and goes live. The WAF held the line in the meantime."
+            },
+            {
+              "text": "The fix passes its tests an hour later and goes live. But nothing held the line during that hour."
+            }
+          ],
+          "why": "Testing first is the safe way to change production. It works best when something else, like a WAF block, contains the attack while you test. But a patch only closes the way in: it doesn't remove anything that came through it."
+        },
+        {
+          "key": "C",
+          "label": "Test the fix in staging, and scan the web server for files that shouldn't be there",
+          "short": "Tested fix + file-integrity scan",
+          "effects": {
+            "minutes": 70,
+            "evidence": 30,
+            "set": {
+              "patched": true,
+              "scanned": true
+            },
+            "points": 10
+          },
+          "characterEffects": {
+            "echo": {
+              "evidence": 20,
+              "note": "Echo's extra clue: she pulls the web server's memory before the scan, so the timeline of what it ran is kept too. Evidence +20."
+            }
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication",
+            "MITRE ATT&CK T1505.003 · Web Shell",
+            "PCI DSS v4.0 · Req. 11.5.2 Change detection"
+          ],
+          "note": [
+            {
+              "if": {
+                "flag": "webshell"
+              },
+              "text": "The fix goes live after its tests. The scan finds the unexpected file in the uploads folder. It is preserved as evidence, removed, and the web server's credentials are changed. The second door is closed."
+            },
+            {
+              "text": "The fix goes live after its tests. The scan comes back clean: nothing was left behind."
+            }
+          ],
+          "why": "Closing the hole is half the job. If anyone got in, they may have left a way back in. Eradication means finding and removing what the attacker left, not only patching the entry point.",
+          "whyDeep": "A file planted in a web-accessible folder that lets someone run commands later is what MITRE ATT&CK calls a web shell (T1505.003). PCI DSS v4.0 Requirement 11.5.2 asks for a change-detection mechanism, such as file integrity monitoring, that alerts on unauthorised changes to critical files."
+        },
+        {
+          "key": "D",
+          "label": "Skip the fix: the WAF rule is enough",
+          "short": "Relied on the WAF alone",
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "noFix": true
+            },
+            "points": 2
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication"
+          ],
+          "note": [
+            {
+              "if": {
+                "flag": "blocked"
+              },
+              "text": "The WAF keeps blocking. The flaw stays in the code, one rule change away from open again."
+            },
+            {
+              "text": "No block and no fix. The flaw stays wide open."
+            }
+          ],
+          "why": "A virtual patch buys time; it is not the fix. Rules get switched back to detect mode, attack variants slip past them, and the flaw is still in the code."
+        },
+        {
+          "key": "E",
+          "if": {
+            "character": "echo"
+          },
+          "label": "Test the fix, and look into the upload folder on your own before telling anyone",
+          "short": "Kept the upload-folder lead to myself",
+          "effects": {
+            "minutes": 90,
+            "evidence": 30,
+            "set": {
+              "patched": true,
+              "scanned": true,
+              "keptQuiet": true
+            },
+            "points": 4
+          },
+          "tags": [
+            "NIST SP 800-61 · Eradication",
+            "MITRE ATT&CK T1505.003 · Web Shell"
+          ],
+          "note": "Ninety minutes later your analysis is perfect and the server is clean. For those ninety minutes, the rest of the team thought the incident was over and stopped looking.",
+          "why": "Echo's habit: share nothing until it's certain. Your lead was right, but a lead the team doesn't know about can't be acted on in time."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "Ask yourself what a professional would leave behind. Then go and look for it.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "The web server wrote a file to disk today. Web servers serve files; they don't usually write them.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "Test the change, then check the server's integrity. A patch protects the future; it says nothing about the past hour.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Push it untested and you'll break something at the worst time. Test it, and while it's testing, go hunting.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "pci"
+        }
+      ]
+    },
+    "pci": {
+      "newScene": true,
+      "clockAt": "10:00",
+      "days": 3,
+      "phase": "Post-Incident Activity",
+      "title": "\"We passed PCI\"",
+      "body": [
+        {
+          "if": {
+            "flag": "skimmed"
+          },
+          "text": "Three days later, {clock}. A review call with Stridewell's CEO, and it is not a calm one. Before you can explain the integrity alerts, the CEO cuts in: \"I don't understand how this happened. We passed our PCI assessment last month.\""
+        },
+        {
+          "text": "Three days later, {clock}. The review call with Stridewell's CEO. The sale ended well and the CEO is relaxed: \"Honestly, I was never worried. We passed our PCI assessment last month.\""
+        }
+      ],
+      "logs": [
+        {
+          "if": {
+            "flag": "skimmed"
+          },
+          "text": "CSP report · Checkout form data sent to pay-metrics[.]example on submit",
+          "type": "hi"
+        },
+        {
+          "if": {
+            "flag": "skimmed"
+          },
+          "text": "Analyst · Estimated exposure: cards entered in the last 72h · sample: **** **** **** 0000",
+          "type": "hi"
+        },
+        {
+          "text": "Audit note: last PCI assessment covered the payment provider integration; the product database was out of scope.",
+          "type": "info"
+        }
+      ],
+      "notes": {
+        "iris": "Auditors check what they're asked to check. Attackers check everything else.",
+        "echo": "The audit note is already in your feed. Read the scope line twice.",
+        "moritz": "Compliance is a snapshot of a scope. Security is the whole system, every day. Explain the difference without jargon, if you can.",
+        "jayson": "If I were picking a target, a fresh PCI certificate would be a good sign. It means everyone has stopped looking."
+      },
+      "choices": [
+        {
+          "key": "A",
+          "label": "Ask where card data actually flows, and what the assessment covered",
+          "short": "Questioned the PCI scope",
+          "effects": {
+            "minutes": 30,
+            "set": {
+              "scopeChecked": true
+            },
+            "points": 10
+          },
+          "characterEffects": {
+            "moritz": {
+              "meters": {
+                "R": -5
+              },
+              "note": "Moritz loses the CEO in technical detail: Reputation −5 extra."
+            }
+          },
+          "tags": [
+            "PCI DSS v4.0 · Req. 12.5.2 Scope",
+            "Compliance ≠ security"
+          ],
+          "note": [
+            {
+              "if": {
+                "flag": "skimmed"
+              },
+              "text": "The audit note explains it: the assessment covered the payment provider integration, while the product database, the web server and the scripts on the checkout page were out of scope. That is exactly the path the incident took. The CEO goes quiet, then asks for a plan."
+            },
+            {
+              "text": "The audit note explains it: the assessment covered the payment provider integration, while the product database and the web server were out of scope. That is exactly where this week's attack landed. The CEO stops smiling and asks for a plan."
+            }
+          ],
+          "why": "Compliance is a snapshot of what was in scope on the day of the audit. Security is whatever holds up today across everything an attacker can reach. A passed assessment says nothing about systems it never looked at.",
+          "whyDeep": "PCI DSS v4.0 Requirement 12.5.2 asks the organisation to document and confirm its scope at least once every 12 months and after significant changes. Requirements 6.4.3 and 11.6.1 cover the scripts on payment pages and alerts when those pages change."
+        },
+        {
+          "key": "B",
+          "label": "Trust the audit: if they passed, the setup is fine",
+          "short": "Trusted the audit",
+          "effects": {
+            "minutes": 5,
+            "set": {
+              "trustedAudit": true
+            },
+            "points": 0
+          },
+          "tags": [
+            "Compliance ≠ security"
+          ],
+          "note": [
+            {
+              "if": {
+                "flag": "skimmed"
+              },
+              "text": "Then how did a script end up on the checkout page? Nobody on the call can answer, and nobody goes looking."
+            },
+            {
+              "text": "Everyone hangs up happy. Nothing about the out-of-scope database changes."
+            }
+          ],
+          "why": "An audit is evidence that certain controls existed on certain systems on a certain day. It is not a guarantee, and this week's attack came in through systems the audit never covered."
+        },
+        {
+          "key": "C",
+          "label": "Recommend a new full assessment next quarter",
+          "short": "Booked a new audit",
+          "effects": {
+            "minutes": 10,
+            "set": {
+              "laterAudit": true
+            },
+            "points": 4
+          },
+          "tags": [
+            "PCI DSS v4.0 · Req. 12.5.2 Scope"
+          ],
+          "note": "A date is set three months out. Until then, nothing changes.",
+          "why": "Another assessment can help, but scheduling one isn't a fix. If it uses the same scope, it will miss the same systems. Ask the scope question now."
+        },
+        {
+          "key": "D",
+          "label": "Leave the incident out of the report so the shop keeps its compliant status",
+          "short": "Kept it out of the report",
+          "effects": {
+            "minutes": 5,
+            "meters": {
+              "R": -10
+            },
+            "set": {
+              "coveredUp": true
+            },
+            "points": -10
+          },
+          "tags": [
+            "PCI DSS v4.0 · Req. 12.10.1 Incident response plan"
+          ],
+          "note": "The report is short and clean. If the card fraud is ever traced back to the shop, it will also be evidence against Brightline.",
+          "why": "A security firm's report is only worth something if it is honest. PCI DSS expects an incident response plan that includes notifying the acquirer and the card brands; hiding an incident breaks that and the client's trust in you."
+        },
+        {
+          "key": "E",
+          "if": {
+            "all": [
+              {
+                "character": "iris"
+              },
+              {
+                "flag": "skimmed"
+              }
+            ]
+          },
+          "label": "Advise waiting until after the weekend to tell the bank and card brands, so the news doesn't hit sales",
+          "short": "Delayed telling the bank",
+          "effects": {
+            "minutes": 5,
+            "meters": {
+              "R": -15
+            },
+            "set": {
+              "delayedNotice": true
+            },
+            "points": 1
+          },
+          "tags": [
+            "PCI DSS v4.0 · Req. 12.10.1 Incident response plan"
+          ],
+          "note": "A quieter weekend. On Monday the bank has already spotted the fraud pattern on its own, and asks why nobody called.",
+          "why": "Every day of delay is another day the stolen cards can be used. The incident response plan exists so the acquirer and card brands hear it from you, quickly. Iris's shortcut buys a weekend and costs the relationship."
+        }
+      ],
+      "consult": {
+        "iris": {
+          "hint": "The question isn't whether they passed. It's what the auditor was allowed to look at.",
+          "misleading": false
+        },
+        "echo": {
+          "hint": "Check the scope line in the audit note. Then compare it with the path this incident took.",
+          "misleading": false
+        },
+        "moritz": {
+          "hint": "A certificate covers a scope on a date. Put the two side by side and the gap explains itself.",
+          "misleading": false
+        },
+        "jayson": {
+          "hint": "Everyone relaxes after an audit. That's when I'd show up. Don't let the CEO relax.",
+          "misleading": false
+        }
+      },
+      "next": [
+        {
+          "to": "end"
+        }
+      ]
+    }
+  },
+  "endings": [
+    {
+      "if": {
+        "flag": "hackedBack"
+      },
+      "grade": "Outside the law",
+      "tone": "bad",
+      "text": "Whatever else you did, Brightline's network attacked an innocent server. Your client now needs a lawyer as well as a security firm."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "flag": "skimmed"
+          },
+          {
+            "any": [
+              {
+                "flag": "trustedAudit"
+              },
+              {
+                "flag": "coveredUp"
+              }
+            ]
+          }
+        ]
+      },
+      "grade": "Rooted",
+      "tone": "bad",
+      "text": "The attacker came in through the product page, left a way back in, and spent three days collecting card data from the checkout. And the lesson stopped at \"but we passed the audit\"."
+    },
+    {
+      "if": {
+        "flag": "skimmed"
+      },
+      "grade": "Skimmed",
+      "tone": "bad",
+      "text": "The sale went on, and so did the attacker. For three days the checkout page sent card details to a stranger. At least now everyone knows why, and what the audit never covered."
+    },
+    {
+      "if": {
+        "all": [
+          {
+            "not": {
+              "flag": "webshell"
+            }
+          },
+          {
+            "not": {
+              "flag": "siteDown"
+            }
+          },
+          {
+            "not": {
+              "flag": "checkoutOff"
+            }
+          },
+          {
+            "not": {
+              "flag": "keptQuiet"
+            }
+          },
+          {
+            "flag": "patched"
+          },
+          {
+            "not": {
+              "flag": "hotfixBroke"
+            }
+          },
+          {
+            "flag": "scopeChecked"
+          }
+        ]
+      },
+      "grade": "Clean checkout",
+      "tone": "good",
+      "text": "Caught in the logs, blocked at the edge, fixed properly, and the false comfort of \"we passed PCI\" didn't survive the review. The sale ended with every card where it belonged."
+    },
+    {
+      "if": {
+        "any": [
+          {
+            "flag": "trustedAudit"
+          },
+          {
+            "flag": "coveredUp"
+          }
+        ]
+      },
+      "grade": "Compliant, not secure",
+      "tone": "mixed",
+      "text": "Nothing was stolen this time. But the review ended where it began: \"we passed the audit\". The out-of-scope systems are still out of sight."
+    },
+    {
+      "grade": "Contained with damage",
+      "tone": "mixed",
+      "text": "No cards left the shop, but the response cost more than it had to: in sales, in time, or in a second door that was found later than it should have been."
+    }
+  ],
+  "lessons": [
+    "Find attacks by their signals: one source, one endpoint, abnormal input, a burst of errors. You never need the payload itself.",
+    "A WAF in detect-only mode is a camera, not a lock. Virtual patching buys time for the real fix.",
+    "Contain as narrowly as the attack, but contain: watching is not a response.",
+    "Test fixes before they reach production, even during an incident.",
+    "Patching closes the way in. Eradication also means finding what the attacker left behind.",
+    "Compliance is a snapshot of a scope. Security has to cover everything an attacker can reach."
+  ],
+  "standards": [
+    "OWASP Top 10 (2021): A03 Injection",
+    "NIST SP 800-61 (Computer Security Incident Handling Guide)",
+    "PCI DSS v4.0: Requirements 6.4 (public-facing web applications), 6.5 (change management), 11.5.2 (change detection), 11.6.1 (payment page tamper detection), 12.5.2 (scope), 12.10.1 (incident response plan)",
+    "MITRE ATT&CK: T1190 Exploit Public-Facing Application, T1505.003 Web Shell"
+  ],
+  "whatActuallyHappened": null
+}
