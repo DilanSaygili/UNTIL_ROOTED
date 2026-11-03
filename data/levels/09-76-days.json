@@ -15,7 +15,7 @@
   },
   "alarmAt": "23:04",
   "introChoice": null,
-  "briefing": "Late July, near midnight, in New York. Sterling Credit, a credit bureau holding financial data on most adults in the country, has finally renewed a certificate on its traffic-inspection appliance. It had been expired for ten months. For the first time since last autumn, the appliance can see inside encrypted traffic, and it doesn't like what it sees.",
+  "briefing": "Late July, near midnight, in New York. Vellmont Credit, a credit bureau holding financial data on most adults in the country, has finally renewed a certificate on its traffic-inspection appliance. It had been expired for ten months. For the first time since last autumn, the appliance can see inside encrypted traffic, and it doesn't like what it sees.",
   "attacker": {
     "activeWhile": {
       "not": {
@@ -524,7 +524,7 @@
       "days": 2,
       "phase": "Post-Incident Activity",
       "title": "When to tell the public",
-      "body": "July 31, {clock}. The scope is taking shape: personal data, including identity numbers, of a very large share of the adult population. The board asks when Sterling Credit should go public.",
+      "body": "July 31, {clock}. The scope is taking shape: personal data, including identity numbers, of a very large share of the adult population. The board asks when Vellmont Credit should go public.",
       "notes": {
         "iris": "Every week of silence is a week in which those identity numbers can be used, and a week the press will count later.",
         "echo": "The data is already out. Telling people is the only part of this you still control.",
@@ -638,7 +638,7 @@
     "site": {
       "phase": "Post-Incident Activity",
       "title": "Where people check",
-      "body": "{clock}. Millions of people will want to check whether they're affected. Marketing proposes a brand-new website with a catchy name, separate from Sterling Credit's own domain. Where should it live?",
+      "body": "{clock}. Millions of people will want to check whether they're affected. Marketing proposes a brand-new website with a catchy name, separate from Vellmont Credit's own domain. Where should it live?",
       "notes": {
         "iris": "Fraudsters will copy whatever you build within hours. Make the real one easy to recognise.",
         "echo": "A new domain looks exactly like a phishing domain. People can't tell the difference, and neither can their filters.",
@@ -681,7 +681,7 @@
           "tags": [
             "Anti-phishing"
           ],
-          "note": "sterlingsecure2017[.]example launches. Within a day, a researcher builds an almost identical fake to prove a point, and Sterling Credit's own social media team links to the fake by mistake.",
+          "note": "sterlingsecure2017[.]example launches. Within a day, a researcher builds an almost identical fake to prove a point, and Vellmont Credit's own social media team links to the fake by mistake.",
           "why": "A new domain trains people to trust unfamiliar addresses at exactly the moment criminals are sending fake ones."
         },
         {
@@ -727,7 +727,7 @@
           "if": {
             "character": "iris"
           },
-          "label": "Use the checker page to sell Sterling Credit's paid identity-monitoring product",
+          "label": "Use the checker page to sell Vellmont Credit's paid identity-monitoring product",
           "short": "Upsold monitoring on the checker",
           "effects": {
             "minutes": 20,
@@ -1127,6 +1127,8 @@
     "MITRE ATT&CK: T1190 Exploit Public-Facing Application, T1552.001 Credentials In Files"
   ],
   "whatActuallyHappened": {
+    "headline": "One unpatched portal, 147 million people exposed",
+    "hacker": "black",
     "title": "What actually happened…",
     "paragraphs": [
       "In March 2017, a critical flaw in Apache Struts, a widely used web application framework, was made public along with a fix (CVE-2017-5638). The US Computer Emergency Readiness Team warned about it on March 8. At Equifax, one of the three big US credit bureaus, the alert was forwarded internally, but according to the US Government Accountability Office (GAO), the distribution list was out of date: the people responsible for the online dispute portal, which ran Struts, never received it. A scan about a week later did not detect the vulnerable portal.",
@@ -1135,7 +1137,7 @@
       "Equifax announced the breach on September 7, 2017. The first estimate was 143 million US consumers; it was raised to 145.5 million in October and later to about 147.9 million. Names, Social Security numbers, birth dates, addresses and, for some people, driver's license and credit card numbers were exposed.",
       "The response caused its own problems. Equifax put its breach-check site on a new domain, equifaxsecurity2017.com, which security experts said looked like a phishing site; a software engineer built a look-alike to prove the point, and Equifax's own social media account linked to it by mistake several times. Three executives sold shares days after the breach was discovered, before it was announced (Equifax said they did not know about it at the time). Another executive, Jun Ying, sold shares after concluding there had been a breach; he was convicted of insider trading and sentenced in 2019 to four months in prison.",
       "CEO Richard Smith retired on September 26, 2017. In July 2019, Equifax agreed to a settlement of at least $575 million with the US Federal Trade Commission, the Consumer Financial Protection Bureau and the states. In February 2020, the US Department of Justice indicted four members of China's military in connection with the hack; China denied involvement.",
-      "Sterling Credit and everything you decided in this level are fictional. The chain is real: one email to the wrong list, one scan with the wrong scope, one expired certificate, one file of plain-text passwords."
+      "Vellmont Credit and everything you decided in this level are fictional. The chain is real: one email to the wrong list, one scan with the wrong scope, one expired certificate, one file of plain-text passwords."
     ],
     "sources": [
       {

@@ -15,6 +15,19 @@
   let run = null;     // the running intro sequence: { skip, cancelled }
   let spreadTimer = null; // the real-time spread counter: { id, seconds }
   let lightsNow = 0;      // Level 12: how many console screens have gone dark
+  let shownKeys = {};     // display letter → the choice's key in the level file (choices are shuffled)
+
+  // v2.0 (update doc): the best answer was too often "A", so players could guess. Choices are shown in a
+  // random order on every visit and lettered A, B, C… by position. "None of these" always stays last.
+  // The level files keep their own keys; only the letters on screen change.
+  function shuffle(list) {
+    const a = list.slice();
+    for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; }
+    return a;
+  }
+  function shuffledChoices(list) {
+    return shuffle(list.filter(c => !c.none)).concat(list.filter(c => c.none));
+  }
 
   // Entry point from the router: show the routine intro first.
   function show(container, lvl) {
@@ -32,6 +45,8 @@
     stopSpread();
     if (roomCtl) { roomCtl.stop(); roomCtl = null; }
     if (keyHandler) { document.removeEventListener("keydown", keyHandler); keyHandler = null; }
+    UR.audio.stopMusic();
+    UR.voice.stop();
   }
 
   // Routine intro: the character arrives at work in the tier's environment, in the level's light.
@@ -51,7 +66,7 @@
       ? h("div", { class: "intro-choice" },
           h("p", { class: "phase" }, "Before the shift"),
           h("p", { class: "intro-text" }, choice.prompt),
-          h("div", { class: "choices" }, ...choice.choices.map((c, i) =>
+          h("div", { class: "choices" }, ...shuffledChoices(choice.choices).map((c, i) =>
             h("button", { class: "choice", onclick: () => pickIntro(c) },
               h("span", { class: "key" }, String.fromCharCode(65 + i)), h("span", { class: "choice-label" }, c.label)))))
       : h("button", { class: "btn primary", id: "start-shift", onclick: beginShift }, "Start shift");
@@ -83,11 +98,44 @@
     if (box) box.replaceWith(UR.h("p", { class: "intro-picked", role: "status" }, "\u2713 " + (c.note || state.intro.short)));
     // Give the note a moment, then bring the room (where the alarm plays) back into view: on smaller
     // screens it has scrolled above the choices, which made the alarm easy to miss.
-    await UR.wait(1500, { skip: false, cancelled: false });
+    const ctl = { skip: false, cancelled: false };
+    const myRun = run = ctl; // leaving for the map cancels the visit
+    await UR.wait(1500, ctl);
     const room = root.querySelector(".room-wrap");
-    if (!room || !room.isConnected) return; // the player left for the map meanwhile
+    if (!room || !room.isConnected || ctl.cancelled) return; // the player left for the map meanwhile
     room.scrollIntoView({ block: "center", behavior: UR.reducedMotion() ? "auto" : "smooth" });
+    if (c.wise != null) await visit(c.wise, room, ctl);
+    if (ctl.cancelled || run !== myRun) return;
+    run = null;
     beginShift();
+  }
+
+  // v2.0 (update doc): after the choice before the shift, another member of the team glitches into the
+  // room, says whether the choice was wise, and glitches out; then the shift starts. The line uses the
+  // player's current title ("Well done, Breach Breaker…"). The visitor is one of the other three, at random.
+  async function visit(wise, room, ctl) {
+    const h = UR.h;
+    const others = UR.data.characters.order.filter(id => id !== state.character);
+    const who = others[Math.floor(Math.random() * others.length)];
+    const ch = UR.data.characters[who];
+    const line = wise
+      ? "Well done, " + UR.save.data.title + ". I guess you are learning."
+      : "Decisions have consequences. I thought you would have learned that by now.";
+    UR.audio.glitch();
+    roomCtl.visitor(ch.look, hat());
+    const text = h("p", { class: "vb-text" });
+    const bubble = h("div", { class: "visitor-bubble " + (wise ? "good" : "bad"), role: "status" },
+      h("p", { class: "bubble-name" }, ch.first), text);
+    room.append(bubble);
+    await UR.wait(500, ctl);
+    UR.voice.say(who, line);
+    await UR.typewrite(text, line, ctl, 28);
+    await UR.wait(2600, ctl);
+    if (ctl.cancelled) { bubble.remove(); return; }
+    UR.audio.glitch();
+    bubble.classList.add("leaving");
+    await roomCtl.visitorLeave();
+    bubble.remove();
   }
 
   // Start work → warning (alarm sound, red flash) → zoom into the monitor → console.
@@ -149,6 +197,8 @@
         mainEl)
     ));
     updateHud();
+    // v2.0: the level music starts with the console and follows the choices (audio.setTension).
+    UR.audio.startMusic(0.45);
     // The routine choice made before the shift (Level 6) is the first line of the feed, so it stays visible.
     if (state.intro) log(state.intro.at + " before the shift: " + state.intro.short, "ok");
     renderNode();
@@ -157,7 +207,7 @@
       if (e.ctrlKey || e.metaKey || e.altKey || !mainEl) return;
       const key = e.key.toUpperCase();
       if (!/^[A-E]$/.test(key)) return;
-      const btn = [...mainEl.querySelectorAll(".choices .choice")].find(b => b.dataset.key === key);
+      const btn = [...mainEl.querySelectorAll(".choices .choice")].find(b => b.dataset.shown === key);
       if (btn) { e.preventDefault(); btn.click(); }
     };
     document.addEventListener("keydown", keyHandler);
@@ -211,7 +261,8 @@
     const node = level.nodes[state.node];
     (node.logs || []).filter(l => E().test(l.if, state)).forEach(l => log(E().text(l.text, state), l.type));
     dimLights(node);
-    const choices = E().visibleChoices(node, state);
+    const choices = shuffledChoices(E().visibleChoices(node, state));
+    shownKeys = {};
     const hint = state.consultHint && state.consultHint.node === state.node ? state.consultHint : null;
     const instinct = node.notes && node.notes[state.character];
     mainEl.replaceChildren(h("article", { class: "node" },
@@ -227,9 +278,12 @@
       node.puzzle ? puzzlePanel(node.puzzle) : null,
       node.queue ? queuePanel(node.queue) : null,
       node.order ? orderPanel(node.order) : null,
-      h("div", { class: "choices" }, ...choices.map(c =>
-        h("button", { class: "choice" + (c.none ? " none" : ""), "data-key": c.key, "aria-keyshortcuts": c.key, onclick: () => pick(c.key) },
-          h("span", { class: "key" }, c.key), h("span", { class: "choice-label" }, E().text(c.label, state)))))
+      h("div", { class: "choices" }, ...choices.map((c, i) => {
+        const shown = String.fromCharCode(65 + i);
+        shownKeys[shown] = c.key;
+        return h("button", { class: "choice" + (c.none ? " none" : ""), "data-key": c.key, "data-shown": shown, "aria-keyshortcuts": shown, onclick: () => pick(c.key, shown) },
+          h("span", { class: "key" }, shown), h("span", { class: "choice-label" }, E().text(c.label, state)));
+      }))
     ));
     updateConsult(true);
     mainEl.querySelector(".choice, .log-line, .alert-item, .order-item").focus();
@@ -291,10 +345,12 @@
     const status = h("p", { class: "puzzle-status", "aria-live": "polite" });
     const undo = h("button", { class: "btn ghost", id: "order-undo", onclick: () => { picked.pop(); refresh(); } }, "Undo last");
     const confirm = h("button", { class: "btn primary", id: "order-confirm", onclick: () => submitOrder(picked.slice()) }, "Confirm order");
-    const items = od.items.map(it => h("button", { class: "order-item", "data-id": it.id,
+    // v2.0: items come in a random order every time, and a level can hide the "Needs:" lines
+    // ("hideNeeds"), because in the bonus timeline they gave the answer away.
+    const items = shuffle(od.items).map(it => h("button", { class: "order-item", "data-id": it.id,
       onclick: () => { if (!picked.includes(it.id)) { picked.push(it.id); refresh(); } } },
       h("span", { class: "order-name" }, E().text(it.label, state)),
-      h("span", { class: "order-needs" }, it.needs && it.needs.length ? "Needs: " + it.needs.map(label).join(", ") : "Needs: nothing else"),
+      od.hideNeeds ? null : h("span", { class: "order-needs" }, it.needs && it.needs.length ? "Needs: " + it.needs.map(label).join(", ") : "Needs: nothing else"),
       it.hint ? h("span", { class: "order-hint" }, E().text(it.hint, state)) : null));
     function refresh() {
       listEl.replaceChildren(...picked.map(id => h("li", {}, label(id))));
@@ -318,7 +374,7 @@
       h("div", { class: "actions" }, undo, confirm));
   }
 
-  // Score the order through the engine; the feedback lists the order that works and any false starts.
+  // Score the order through the engine; the feedback says how many were in place and how many false starts.
   function submitOrder(ids) {
     const node = level.nodes[state.node];
     const od = node.order;
@@ -329,13 +385,16 @@
     r.fired.forEach(f => { if (f.log) log(f.log, "hi"); log(f.text, "butterfly"); });
     if (r.fired.length) UR.audio.chime();
     updateConsult(false);
+    // v2.0 (update doc): showing "The order that works" during the level was a cheat sheet for the
+    // next try. The level only says how many were in place and how many false starts there were;
+    // the full order is kept for the report, which shows it once the level is passed.
     const label = id => E().text(od.items.find(it => it.id === id).label, state);
+    state.orders = state.orders || [];
+    state.orders.push({ title: od.shortLabel || "Recovery order", correct: od.correct.map(id => ({ label: label(id), why: E().text(od.items.find(it => it.id === id).why, state), placed: ids[od.correct.indexOf(id)] === id ? null : label(ids[od.correct.indexOf(id)]) })) });
     const extra = UR.h("div", { class: "order-result" },
-      r.clashes.length ? UR.h("p", { class: "order-clash" }, "False starts: " + r.clashes.map(c => label(c.item) + " came back before " + label(c.needs)).join("; ") +
-        ". Each cost " + (od.clashMinutes || 0) + " minutes.") : null,
-      UR.h("p", { class: "panel-label" }, "The order that works"),
-      UR.h("ol", { class: "order-list" }, ...od.correct.map((id, i) => UR.h("li", {},
-        UR.h("strong", {}, label(id) + (ids[i] === id ? " ✓ " : " ✗ (you placed " + label(ids[i]) + ") ")), E().text(od.items.find(it => it.id === id).why, state)))));
+      UR.h("p", { class: "order-clash" }, r.right + " of " + od.correct.length + " in the right place." +
+        (r.clashes.length ? " " + r.clashes.length + " false start" + (r.clashes.length > 1 ? "s" : "") + ", " + (od.clashMinutes || 0) + " minutes each." : " No false starts.")),
+      UR.h("p", { class: "puzzle-status" }, "The full order is in the report once you pass the level."));
     renderFeedback(Object.assign({}, r, { after: extra }));
   }
 
@@ -447,9 +506,10 @@
   }
 
   // The Consult button in the top bar says in words whether it can be used, and why not.
+  // v2.0: a phone icon in front of the label makes the button easier to spot.
   function updateConsult(onNode) {
     const st = UR.consult.status(level, state, onNode ? level.nodes[state.node] : null);
-    consultBtn.textContent = st.label;
+    consultBtn.replaceChildren(UR.consult.phoneIcon(), " " + st.label);
     consultBtn.disabled = !(st.usable && onNode);
   }
 
@@ -478,14 +538,17 @@
   function hat() { return UR.scene.HATS[UR.data.tiers.tiers[level.tier].hat]; }
 
   // Apply a choice through the engine, then show the feedback panel.
-  function pick(key) {
+  function pick(key, shown) {
     const before = state.clock;
     // On a real-time spread node, a slow decision fires its event before the choice is applied.
     const slow = E().spreadDelay(level, state, stopSpread());
     const result = E().choose(level, state, key);
     if (slow.length) result.fired = slow.concat(result.fired);
+    // The letter the player saw, for the feed and the feedback (the level file's key can differ).
+    result.shown = shown || key;
+    state.path[state.path.length - 1].shown = result.shown;
     updateHud(result.delta);
-    log(E().formatClock(before) + " decision " + key + ": " + result.choice.short, "ok");
+    log(E().formatClock(before) + " decision " + result.shown + ": " + result.choice.short, "ok");
     result.fired.forEach(f => { if (f.log) log(f.log, "hi"); log(f.text, "butterfly"); });
     if (result.fired.length) UR.audio.chime();
     updateConsult(false);
@@ -497,8 +560,9 @@
   function renderSuggestions(result) {
     const h = UR.h;
     const c = result.choice;
+    moodAfter(c.effects.points, result.fired);
     mainEl.replaceChildren(h("article", { class: "feedback" },
-      h("p", { class: "phase" }, "Decision " + c.key + " · " + c.short),
+      h("p", { class: "phase" }, "Decision " + (result.shown || c.key) + " · " + c.short),
       h("p", { class: "node-body" }, E().text(c.note, state)),
       h("p", { class: "quality good" }, "Right call · " + c.effects.points + "/10"),
       h("details", { class: "why", open: "" }, h("summary", {}, "Why?"), h("p", {}, E().text(c.why, state))),
@@ -539,10 +603,20 @@
   }
 
   // Feedback: what happened, meter changes, framework tags, "Why?", and butterfly alerts.
+  // v2.0: the level music follows the result. A strong call eases the tension, a weak or harmful one
+  // and every butterfly effect raise it.
+  function moodAfter(pts, fired) {
+    const t = UR.audio.tension;
+    if (t == null) return;
+    const step = pts >= 8 ? -0.15 : pts >= 4 ? 0.05 : pts >= 0 ? 0.15 : 0.25;
+    UR.audio.setTension(t + step + 0.1 * ((fired && fired.length) || 0));
+  }
+
   function renderFeedback(result) {
     const h = UR.h;
     const c = result.choice;
     const pts = (c.effects && c.effects.points) || 0;
+    moodAfter(pts, result.fired);
     const changes = [];
     if (result.delta.minutes) changes.push("+" + result.delta.minutes + " min");
     if (result.delta.automated) changes.push("Jayson's automation saved " + result.delta.automated + " min");
@@ -565,7 +639,7 @@
     if (result.delta.nonePenalty) changes.push("\u201CNone of these\u201D penalty −" + result.delta.nonePenalty + " points");
 
     mainEl.replaceChildren(h("article", { class: "feedback" },
-      h("p", { class: "phase" }, (c.key ? "Decision " + c.key + " · " : "") + c.short),
+      h("p", { class: "phase" }, (c.key ? "Decision " + (result.shown || c.key) + " · " : "") + c.short),
       h("p", { class: "node-body" }, E().text(c.note, state)),
       changes.length ? h("p", { class: "changes" }, changes.join(" · ")) : null,
       h("p", { class: "quality " + (pts >= 8 ? "good" : pts >= 4 ? "mixed" : "bad") },
@@ -586,7 +660,7 @@
   }
 
   // Hand the finished state to the report screen.
-  function finish() { UR.screens.report.show(root, level, state); }
+  function finish() { UR.audio.stopMusic(); UR.screens.report.show(root, level, state); }
 
   function signed(n) { return (n > 0 ? "+" : "") + n; }
   function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }

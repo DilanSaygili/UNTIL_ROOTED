@@ -1,28 +1,54 @@
 # Until Rooted
 
 **A browser game about defending a company during a cyberattack.**
-You are the incident responder. The alarm goes off, the attacker is already inside, and every decision you make has delayed consequences. Twelve levels plus a bonus, from a phished mailbox at a small freight company to a power grid going dark on a winter night.
+You are the incident responder. The alarm goes off, the attacker is already inside, and every decision you make
+has delayed consequences. Twelve levels plus a bonus, from a phished mailbox at a small freight company to a power
+grid going dark on a winter night.
 
-**▶ Play:** https://DilanSaygili.github.io/UNTIL_ROOTED/
+**▶ Play:** https://YOUR-USERNAME.github.io/until-rooted/
 
 ![Title screen](docs/screenshot-title.png)
 
 ## What the game is about
 
-- **Real defence, no hacking.** Every decision follows real incident-response practice: NIST SP 800-61, MITRE ATT&CK, OWASP, PCI DSS, GDPR's 72-hour rule. The game teaches how to detect, contain and recover. It never shows exploit code or attack tools.
-- **The butterfly effect.** A choice that looks safe can come back an hour (or a week) later. The report at the end of each level shows the chain: *this happened because of that.*
-- **Inspired by real incidents.** Six levels are inspired by real events (LastPass 2022, Target 2013, Equifax 2017, NotPetya 2017, the Ukrainian power grid 2015, SolarWinds 2020). People and companies in the game are fictional; real names appear only in the *What actually happened…* screen after the level, with sources in `docs/`.
-- **Four defenders, four ways to play.** Iris (threat intelligence and ransom negotiation), Echo (malware and forensics), Moritz (security architecture and OT) and Jayson (penetration testing). Each has an ability and a weakness that change the choices you get and what they cost.
+- **Real defence, no hacking.** Every decision follows real incident-response practice: NIST SP 800-61, MITRE ATT&CK,
+  OWASP, PCI DSS, GDPR's 72-hour rule. The game teaches how to detect, contain and recover. It never shows
+  exploit code or attack tools.
+- **The butterfly effect.** A choice that looks safe can come back an hour (or a week) later. The report at
+  the end of each level shows the chain: *this happened because of that.*
+- **Inspired by real incidents.** Six levels are inspired by real events (LastPass 2022, Target 2013, Equifax 2017,
+  NotPetya 2017, the Ukrainian power grid 2015, SolarWinds 2020). People and companies in the game are fictional;
+  real names appear only in the *What actually happened…* screen after the level, with sources in `docs/`.
+- **Four defenders, four ways to play.** Iris (threat intelligence and ransom negotiation), Echo (malware and
+  forensics), Moritz (security architecture and OT) and Jayson (penetration testing). Each has an ability and a
+  weakness that change the choices you get and what they cost.
 
 ![A decision in Level 11](docs/screenshot-level.png)
+
+## What's new in v2.0
+
+- The title screen arrives with a glitch, and its buttons click.
+- Each character's ID card opens with their own effect: Echo a strobe, Jayson lightning, Moritz a glow, Iris a lens flare.
+- Passing a level for the first time opens a **New title earned** screen before the report.
+- Tension music plays only inside levels and follows your choices: good calls calm it, bad calls and butterfly effects tighten it.
+- *What actually happened…* now arrives like a flashback, as a newspaper front page with a hooded figure in the event's colour.
+- Level 6: after the choice before the shift, a teammate glitches in and tells you whether it was wise.
+- Choices appear in a random order on every visit, so the best answer is not always **A**.
+- The recovery order (Level 11) and the attack timeline (bonus) no longer show the answer during the level; it is in the report once you pass.
+- Rooms: a coat rack with a black hoodie in every room, an armchair and a dog at home, a busier shared office, and a lift down to the underground centre.
+- A closing scene after the bonus level: press **End** after *What actually happened…*. The phone call is spoken with your browser's own voices.
+- The map frames each level in its tier's hat colour, and the Consult button has a phone icon.
 
 ## How to play
 
 1. Pick a character, read their ID card, run their background check.
 2. Each level starts with a normal working day. Then the alarm.
-3. Read the event feed and the meters (Confidentiality, Integrity, Availability, Reputation, Evidence, Losses), then decide. Keys **A–E** pick a choice.
-4. Score **70%** or more to earn the level's title and unlock the next level. Score **100%** to earn a tip token for **Consult**: ask a teammate for advice in a later level (from Level 4 on; in Master levels the advice can be wrong).
-5. In Master levels one answer is always **None of these**. Choose it when every option is wrong, and two teammates will suggest something better.
+3. Read the event feed and the meters (Confidentiality, Integrity, Availability, Reputation, Evidence, Losses),
+   then decide. Keys **A–E** pick a choice.
+4. Score **70%** or more to earn the level's title and unlock the next level. Score **100%** to earn a tip token
+   for **Consult**: ask a teammate for advice in a later level (from Level 4 on; in Master levels the advice can be wrong).
+5. In Master levels one answer is always **None of these**. Choose it when every option is wrong, and two
+   teammates will suggest something better.
 
 | Tier | Levels | Setting | Choices per decision |
 |---|---|---|---|
@@ -68,9 +94,9 @@ match the tier, and no bad ending can reach the 70% pass mark. `docs/paths-*.md`
 
 - `index.html`, `css/style.css`: page and styles
 - `js/engine.js`: the rules (state, conditions, effects, attacker timeline, scoring), with no DOM code
-- `js/screens/`: title, character select, level map, level, report
+- `js/screens/`: title, character select, level map, level, report, ending
 - `js/scene.js`: all pixel art, drawn on canvas (characters, rooms, lighting)
-- `js/audio.js`: synthesized sounds; `js/consult.js`: Consult and teammates' suggestions; `js/save.js`: progress
+- `js/audio.js`: synthesized sounds and the level music; `js/voice.js`: spoken lines (Web Speech API); `js/consult.js`: Consult and teammates' suggestions; `js/save.js`: progress
 - `data/`: tiers, characters, and one JSON file per level
 - `tools/`: level validator and single-file bundler
 - `docs/`: one path per ending for each level, and the sources behind every real-event level

@@ -1075,6 +1075,8 @@
     "MITRE ATT&CK for ICS: T0831 Manipulation of Control"
   ],
   "whatActuallyHappened": {
+    "headline": "Hackers switch off the lights for 225,000 in western Ukraine",
+    "hacker": "red",
     "title": "What actually happened…",
     "paragraphs": [
       "On 23 December 2015, starting at about 15:35 local time, attackers cut power to roughly 225,000 customers in western Ukraine by attacking three regional electricity distribution companies (oblenergos): Prykarpattyaoblenergo, Kyivoblenergo and Chernivtsioblenergo. Outages lasted from one to about six hours.",

@@ -36,6 +36,7 @@
     "choices": [
       {
         "label": "Run the restore test and take the backup copy offline before leaving",
+      "wise": true,
         "short": "Tested the backups, took a copy offline",
         "effects": {
           "set": {
@@ -49,6 +50,7 @@
       },
       {
         "label": "Leave early: the backup jobs have been green all month",
+      "wise": false,
         "short": "Left early, backups untested",
         "effects": {
           "setVar": {

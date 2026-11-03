@@ -34,7 +34,7 @@
         const c = chars[id];
         const canvas = h("canvas", { class: "portrait", "aria-hidden": "true" });
         UR.scene.portrait(canvas, c.look, "green");
-        return h("button", { class: "roster-card", id: "pick-" + id, onclick: () => idCard(id) },
+        return h("button", { class: "roster-card", id: "pick-" + id, onclick: () => idCard(id, true) },
           canvas, h("span", { class: "roster-name" }, c.first));
       })),
       h("button", { class: "btn ghost", id: "back-title", onclick: () => UR.go.title() }, "Back to title")
@@ -42,8 +42,36 @@
     root.querySelector(".roster-card").focus();
   }
 
+  // v2.0 (update doc): opened from the team screen, the ID card arrives with an effect that suits the
+  // character: Echo a strobe, Jayson lightning, Moritz a slow glow, Iris a lens flare. Pure CSS
+  // (.fx-*), skipped with reduced motion; the overlay is decoration only.
+  const ENTRANCE = { echo: "strobe", jayson: "lightning", moritz: "glow", iris: "flare" };
+
+  function entrance(head, id) {
+    const kind = ENTRANCE[id];
+    if (!kind || UR.reducedMotion()) return;
+    const h = UR.h;
+    const fx = h("div", { class: "id-fx", "aria-hidden": "true" });
+    if (kind === "lightning") {
+      // Two jagged bolts as inline SVG.
+      const ns = "http://www.w3.org/2000/svg";
+      const svg = document.createElementNS(ns, "svg");
+      svg.setAttribute("viewBox", "0 0 480 100"); svg.setAttribute("preserveAspectRatio", "none"); svg.setAttribute("class", "bolt");
+      ["66,0 52,36 74,40 44,100", "300,0 290,28 306,32 282,66 296,70 284,100", "52,36 34,58"].forEach((pts, i) => {
+        const pl = document.createElementNS(ns, "polyline");
+        pl.setAttribute("points", pts); pl.setAttribute("class", "bolt-line b" + i);
+        svg.append(pl);
+      });
+      fx.append(svg);
+    }
+    if (kind === "flare") fx.append(h("span", { class: "flare-streak" }), h("span", { class: "flare-ring r1" }), h("span", { class: "flare-ring r2" }), h("span", { class: "flare-ring r3" }));
+    head.append(fx);
+    head.classList.add("fx-" + kind);
+    setTimeout(() => { fx.remove(); head.classList.remove("fx-" + kind); }, 2000);
+  }
+
   // ---- 2. ID card: a decrypting terminal header, then the attributes. ----
-  async function idCard(id) {
+  async function idCard(id, withEntrance) {
     const ctl = reset();
     const h = UR.h;
     const c = UR.data.characters[id];
@@ -74,6 +102,7 @@
       h("h1", { class: "sr-only" }, "ID card for " + c.first + ". " + c.role + "."), // the page heading for screen readers
       h("div", { class: "id-head" }, canvas, term),
       details));
+    if (withEntrance) entrance(root.querySelector(".id-head"), id);
 
     const lines = [
       "> DECRYPTING PROFILE...",

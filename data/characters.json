@@ -12,6 +12,7 @@
     "weakness": "Ethical shortcuts and arrogance. \"Results matter, not methods.\" She sometimes offers tempting, ethically grey shortcuts, such as paying a ransom quietly or delaying notification. They seem to work short-term, but cost Reputation and feed the butterfly chain.",
     "highlights": [6, 8, 10],
     "quote": "Don't ask me how secure a system is. Tell me who you're protecting it from, and I'll tell you why that's impossible.",
+    "voice": { "gender": "female", "lang": "en-GB", "pitch": 1.0, "rate": 0.95 },
     "look": { "skin": "#6e4532", "skinShade": "#55331f", "hair": "#1a1210", "hairStyle": "bun", "top": "#7a1f33", "topShade": "#5a1424", "accent": "#e3b341" },
     "scenes": [
       { "type": "phone", "caption": "London, 23:40. A ransom call. She sets the price." },
@@ -30,6 +31,7 @@
     "weakness": "A lone wolf who keeps information to herself. She does not share findings until they are perfect. With the attacker clock running, that silence can be expensive.",
     "highlights": [3, 9, 11],
     "quote": "Nothing in the digital world is ever truly deleted. It just hides where people stop looking. That's exactly where I live.",
+    "voice": { "gender": "female", "lang": "en-US", "pitch": 1.25, "rate": 1.0 },
     "look": { "skin": "#f0d2bd", "skinShade": "#d4ae96", "hair": "#e9e4f2", "hairStyle": "bob", "top": "#1d1f29", "topShade": "#11121a", "accent": "#ff4fa3" },
     "scenes": [
       { "type": "hood", "caption": "Bergen, 03:12. The hood goes up. The world goes quiet." },
@@ -48,6 +50,7 @@
     "weakness": "Cannot communicate with non-technical people. He struggles to explain decisions to executives and the press, so stakeholder and Reputation meters drop faster with him.",
     "highlights": [6, 11, 12],
     "quote": "You use words to persuade people. I build systems that don't need persuading.",
+    "voice": { "gender": "male", "lang": "en-GB", "pitch": 0.8, "rate": 0.92 },
     "look": { "skin": "#e8c3a4", "skinShade": "#c9a083", "hair": "#5b3a22", "hairStyle": "short", "beard": true, "top": "#25324a", "topShade": "#18223a", "accent": "#9aa7b5" },
     "scenes": [
       { "type": "book", "caption": "Berlin, 06:00. A history book before the first alert." },
@@ -66,6 +69,7 @@
     "weakness": "Overconfident and hasty; sometimes acts without permission or documentation. The biggest danger: he wants to \"hack back\". That is illegal in real life, and accepting it brings legal and reputational penalties.",
     "highlights": [2, 5, 7],
     "quote": "The easiest way through a firewall? Buy a coffee for the person who knows the password. People are the weakest link.",
+    "voice": { "gender": "male", "lang": "en-US", "pitch": 1.0, "rate": 1.05 },
     "look": { "skin": "#5c3a26", "skinShade": "#462a1a", "hair": "#120c0a", "hairStyle": "fade", "top": "#c23b2e", "topShade": "#962a20", "accent": "#f2f2f2", "headphones": true },
     "scenes": [
       { "type": "basketball", "caption": "Detroit, 06:30. Forty free throws before the first email." },

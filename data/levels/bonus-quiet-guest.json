@@ -741,9 +741,10 @@
       "days": 7,
       "phase": "Post-Incident Activity",
       "title": "Put the pieces together",
-      "body": "Week 5, {clock}. You found the clues backwards: the MFA device first, then the tokens, then the monitoring tool, and the build last. The report has to tell the story in the order it happened.",
+      "body": "Week 5, {clock}. Five weeks of clues, found in the order the investigation stumbled on them. The report has to tell the story in the order it actually happened.",
       "order": {
-        "prompt": "Put the attacker's steps in the order they happened. Each step says what it needed first.",
+        "prompt": "Put the attacker's steps in the order they happened, from the very first to the last. Ask of each step: what had to happen before this could?",
+        "hideNeeds": true,
         "items": [
           {
             "id": "mfa",
@@ -1048,6 +1049,8 @@
     "MITRE ATT&CK: T1195.002 Compromise Software Supply Chain, T1098.005 Device Registration, T1606.002 Forge Web Credentials: SAML Tokens"
   ],
   "whatActuallyHappened": {
+    "headline": "A trusted update hid a quiet guest for months",
+    "hacker": "black",
     "title": "What actually happened…",
     "paragraphs": [
       "In late November 2020, the security company FireEye noticed that one of its employees' accounts \"had registered a second phone\" for two-factor codes; the employee had not done it. FireEye's CEO Kevin Mandia described this to the US Senate Intelligence Committee on 23 February 2021. On 8 December 2020 FireEye announced that a suspected state-sponsored attacker had stolen its red team tools.",

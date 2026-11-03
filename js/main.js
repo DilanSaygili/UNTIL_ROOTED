@@ -1,7 +1,10 @@
 // main.js — boot, shared helpers and the screen router.
-// Flow: title → character select / ID card / background check → map → level → report → map.
+// Flow: title → character select / ID card / background check → map → level → (new title) → report → map.
+// After the bonus level is passed: report → What actually happened… → End (closing scene) → map.
 (function (UR) {
   "use strict";
+
+  UR.VERSION = "2.0";
 
   // Create a DOM element with attributes and children. Strings become text nodes,
   // so level text is never parsed as HTML.
@@ -82,7 +85,7 @@
   };
 
   function app() { return document.getElementById("app"); }
-  function stopAll() { UR.screens.characters.stop(); UR.screens.level.stop(); }
+  function stopAll() { UR.screens.characters.stop(); UR.screens.level.stop(); UR.screens.ending.stop(); UR.audio.stopMusic(); }
 
   // "#demo" in the link opens the training drill (Consult and "None of these"). It saves nothing;
   // without a chosen character it plays as Iris, kept in memory only.

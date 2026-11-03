@@ -13,7 +13,7 @@
   },
   "alarmAt": "02:47",
   "introChoice": null,
-  "briefing": "Night shift at Deepwatch, an operations centre forty metres under a hillside that watches water and power sites for six counties. Before any alert reaches a human, ARGUS, the centre's AI assistant, reads it and writes a calm summary. It has been right for months. Tonight one of its summaries is about the Millbrook water treatment plant.",
+  "briefing": "Night shift at Cinderhall, an operations centre forty metres under a hillside that watches water and power sites for six counties. Before any alert reaches a human, ARGUS, the centre's AI assistant, reads it and writes a calm summary. It has been right for months. Tonight one of its summaries is about the Millbrook water treatment plant.",
   "attacker": {
     "activeWhile": {
       "not": {
@@ -30,7 +30,7 @@
         },
         "penalty": 20,
         "log": "HMI | Chemical dosing setpoint changed outside the safe range [value redacted] · change reverted by field operator",
-        "text": "At Millbrook, the chemical dosing setpoint is changed outside the safe range. ARGUS files the HMI event under \"maintenance\", so nobody at Deepwatch looks. A field operator on a routine round notices the reading and reverts it by hand. On another night, the round might have come later."
+        "text": "At Millbrook, the chemical dosing setpoint is changed outside the safe range. ARGUS files the HMI event under \"maintenance\", so nobody at Cinderhall looks. A field operator on a routine round notices the reading and reverts it by hand. On another night, the round might have come later."
       },
       {
         "onEnter": "argus",
@@ -55,7 +55,7 @@
         "because": [
           "Alert rule 17 was switched off on the word of a phone call"
         ],
-        "text": "At 03:40 someone reaches the Millbrook HMI again, through a second remote account. Rule 17 exists to flag exactly that. It is off, so Deepwatch sees nothing. Twenty minutes pass before a plant operator notices and pulls the remote link."
+        "text": "At 03:40 someone reaches the Millbrook HMI again, through a second remote account. Rule 17 exists to flag exactly that. It is off, so Cinderhall sees nothing. Twenty minutes pass before a plant operator notices and pulls the remote link."
       }
     ]
   },
@@ -831,7 +831,7 @@
             "Incident communication"
           ],
           "note": "Headlines follow: \"AI let hackers into water plant\". The vendor's lawyers call. The regulator learns about the incident from the newspaper.",
-          "why": "Public statements come after proper reporting and with agreed facts. Blaming a supplier in public skips the regulator and invites a legal fight; Deepwatch also chose to give ARGUS those powers."
+          "why": "Public statements come after proper reporting and with agreed facts. Blaming a supplier in public skips the regulator and invites a legal fight; Cinderhall also chose to give ARGUS those powers."
         },
         {
           "key": "D",
@@ -922,7 +922,7 @@
       },
       "grade": "Crossed the line",
       "tone": "bad",
-      "text": "While Millbrook's controls were open, Deepwatch was breaking into a stranger's computer abroad. The intruder was stopped, but Deepwatch now has a legal problem of its own."
+      "text": "While Millbrook's controls were open, Cinderhall was breaking into a stranger's computer abroad. The intruder was stopped, but Cinderhall now has a legal problem of its own."
     },
     {
       "if": {
@@ -969,7 +969,7 @@
       },
       "grade": "Human in the loop",
       "tone": "good",
-      "text": "You read past the machine's calm summary, let the plant's own people close the door, and refused a voice you couldn't verify. ARGUS still helps at Deepwatch, but it no longer decides."
+      "text": "You read past the machine's calm summary, let the plant's own people close the door, and refused a voice you couldn't verify. ARGUS still helps at Cinderhall, but it no longer decides."
     },
     {
       "if": {
@@ -1002,7 +1002,7 @@
     {
       "grade": "Contained with damage",
       "tone": "mixed",
-      "text": "The intruder was stopped and the plant stayed safe, but a blind spot, a slow report or an AI with too much power left Deepwatch more exposed than it needed to be."
+      "text": "The intruder was stopped and the plant stayed safe, but a blind spot, a slow report or an AI with too much power left Cinderhall more exposed than it needed to be."
     }
   ],
   "lessons": [

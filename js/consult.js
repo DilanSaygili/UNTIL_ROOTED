@@ -21,6 +21,19 @@
     return { usable: true, label: "Consult · " + tokens(level, state) + " tip" + (tokens(level, state) === 1 ? "" : "s") };
   }
 
+  // v2.0 (update doc): a phone symbol in front of "Consult", so the button stands out. Inline SVG,
+  // so it looks the same everywhere (an emoji would change with the device).
+  function phoneIcon() {
+    const ns = "http://www.w3.org/2000/svg";
+    const svg = document.createElementNS(ns, "svg");
+    svg.setAttribute("viewBox", "0 0 24 24"); svg.setAttribute("class", "phone-icon"); svg.setAttribute("aria-hidden", "true");
+    const p = document.createElementNS(ns, "path");
+    p.setAttribute("d", "M6.6 10.8a15.1 15.1 0 0 0 6.6 6.6l2.2-2.2a1 1 0 0 1 1-.25 11.4 11.4 0 0 0 3.6.57 1 1 0 0 1 1 1V20a1 1 0 0 1-1 1A17 17 0 0 1 3 4a1 1 0 0 1 1-1h3.5a1 1 0 0 1 1 1c0 1.25.2 2.45.57 3.57a1 1 0 0 1-.25 1z");
+    p.setAttribute("fill", "currentColor");
+    svg.append(p);
+    return svg;
+  }
+
   // A small portrait canvas for panels and bubbles.
   function face(id, hat) {
     const canvas = UR.h("canvas", { class: "face", "aria-hidden": "true" });
@@ -68,5 +81,5 @@
         h("button", { class: "btn small", id: "go-" + s.by, onclick: () => onPick(i) }, "Go with " + UR.data.characters[s.by].first))));
   }
 
-  UR.consult = { status, panel, bubble, suggestions, tokens };
+  UR.consult = { status, panel, bubble, suggestions, tokens, phoneIcon };
 })(window.UR = window.UR || {});

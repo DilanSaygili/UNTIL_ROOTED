@@ -15,4 +15,4 @@ Links:
 - https://www.govinfosecurity.com/ex-equifax-cio-gets-4-month-prison-term-for-insider-trading-a-12704
 - https://en.wikipedia.org/wiki/2017_Equifax_data_breach
 
-All gameplay names (Sterling Credit and its staff) are fictional. The "76 days" title follows the design document; the GAO dates (May 13 to July 29) give 77 days.
+All gameplay names (Vellmont Credit and its staff) are fictional. The "76 days" title follows the design document; the GAO dates (May 13 to July 29) give 77 days.

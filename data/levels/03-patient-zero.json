@@ -853,6 +853,8 @@
     "MITRE ATT&CK: T1190 Exploit Public-Facing Application, T1056.001 Keylogging, T1078 Valid Accounts"
   ],
   "whatActuallyHappened": {
+    "headline": "Password vault firm breached through an engineer's home computer",
+    "hacker": "gray",
     "title": "What actually happened…",
     "paragraphs": [
       "In August 2022, the password manager LastPass announced that someone had accessed portions of its development environment through a single compromised developer account, and had taken portions of source code and technical information. In September, the company said there was no evidence that customer data or encrypted password vaults had been accessed.",

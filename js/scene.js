@@ -255,9 +255,29 @@
     px(ctx, 210, 97, 6, 7, "#f1ebe0"); px(ctx, 216, 99, 2, 3, "#f1ebe0");   // mug
     if (Math.floor(t * 2) % 2 === 0) px(ctx, 212, 92, 1, 3, "rgba(255,255,255,0.6)"); // steam
 
-    // Plant.
-    px(ctx, 290, 112, 14, 14, "#9c5b3a");
-    [[286, 96], [294, 90], [300, 98], [292, 102]].forEach(([x, y]) => px(ctx, x, y, 8, 12, "#3f7d46"));
+    // v2.0 (update doc): an armchair on the right so it is clearly a home, and a dog lying in front of it,
+    // wagging its tail.
+    px(ctx, 244, 94, 52, 18, "#3d6b78"); px(ctx, 246, 96, 48, 2, "#4f8494");          // back
+    px(ctx, 238, 104, 10, 22, "#335a66"); px(ctx, 292, 104, 10, 22, "#335a66");      // arms
+    px(ctx, 238, 103, 10, 3, "#4f8494"); px(ctx, 292, 103, 10, 3, "#4f8494");
+    px(ctx, 248, 110, 44, 10, "#46798a"); px(ctx, 248, 110, 44, 2, "#5a90a1");      // seat cushion
+    px(ctx, 248, 120, 44, 6, "#2c4e59");
+    px(ctx, 241, 126, 3, 5, "#3a2a1c"); px(ctx, 296, 126, 3, 5, "#3a2a1c");         // legs
+    px(ctx, 258, 98, 14, 9, "#e3b341"); px(ctx, 260, 100, 10, 5, "#c9962a");       // cushion
+    // The dog (facing left, towards the desk): body, head, ear, paws and a wagging tail.
+    const wag = UR.reducedMotion() ? 0 : Math.floor(t * 6) % 3;
+    px(ctx, 252, 142, 30, 10, "#c8893a"); px(ctx, 252, 149, 30, 3, "#a86f2b");    // body
+    px(ctx, 244, 136, 12, 10, "#c8893a"); px(ctx, 240, 141, 6, 5, "#d9a35a");     // head and muzzle
+    px(ctx, 239, 142, 2, 2, "#1a1210"); px(ctx, 247, 139, 1, 1, "#1a1210");       // nose, eye
+    px(ctx, 251, 136, 4, 7, "#8a5a24");                                             // ear
+    px(ctx, 238, 151, 10, 2, "#d9a35a"); px(ctx, 268, 151, 10, 2, "#d9a35a");     // paws
+    if (wag === 0) px(ctx, 282, 140, 3, 3, "#a86f2b"), px(ctx, 285, 137, 3, 3, "#a86f2b");
+    else if (wag === 1) px(ctx, 282, 143, 4, 2, "#a86f2b"), px(ctx, 286, 142, 4, 2, "#a86f2b");
+    else px(ctx, 282, 146, 3, 3, "#a86f2b"), px(ctx, 285, 148, 3, 3, "#a86f2b");
+
+    // Plant, now in the far corner.
+    px(ctx, 306, 116, 10, 10, "#9c5b3a");
+    [[304, 102], [310, 98], [312, 106]].forEach(([x, y]) => px(ctx, x, y, 6, 12, "#3f7d46"));
   }
 
   // Draw the Brightline Security office (Intermediate tier): glass door, whiteboard, company sign,
@@ -315,11 +335,24 @@
     px(ctx, 256, 86, 26, 17, "#1b1e24"); px(ctx, 258, 88, 22, 13, "#10202c");
     for (let i = 0; i < 4; i++) px(ctx, 260, 90 + i * 3, 6 + ((i * 7) % 12), 1, i % 2 ? "#63d49c" : "#9fb3c8");
     px(ctx, 267, 103, 4, 3, "#1b1e24");
-    px(ctx, 246, 112, 18, 3, "#34343e"); px(ctx, 248, 98, 14, 14, "#34343e"); // empty chair
 
+    // v2.0 (update doc): a busier, shared office. A colleague works at the desk by the window...
+    drawSeated(ctx, NPCS[0], null, 232, 82);
+    // At night (Level 6, a holiday weekend) the others have gone home; only this colleague stays.
+    if (L.stars) { px(ctx, 304, 112, 12, 14, "#d0d6db"); [[300, 98], [308, 92], [312, 100]].forEach(([x, y]) => px(ctx, x, y, 7, 14, "#3f7d46")); return; }
+    // ...another stands at the whiteboard with a coffee...
+    const b2 = NPCS[1];
+    drawWalker(ctx, b2, null, 108, 128, t, { still: true, flip: true });
+    px(ctx, 107, 112, 3, 4, "#f1ebe0");
+    // ...and two more share the long bench desk in front.
+    px(ctx, 214, 158, 106, 4, "#d6d9dc"); px(ctx, 214, 162, 106, 18, "#c3c8cd");
+    drawHeadOverMonitor(ctx, NPCS[2], 236, 136, t, 0);
+    drawHeadOverMonitor(ctx, NPCS[3], 284, 138, t, 2);
+    [[233, 146], [281, 148]].forEach(([x, y]) => { px(ctx, x, y, 20, 12, "#1b1e24"); px(ctx, x + 8, y + 12, 4, 2, "#1b1e24"); });
+    px(ctx, 262, 153, 6, 5, "#e8c35a");                                       // a shared mug
     // Plant in the corner.
-    px(ctx, 304, 112, 12, 14, "#d0d6db");
-    [[300, 98], [308, 92], [312, 100]].forEach(([x, y]) => px(ctx, x, y, 7, 14, "#3f7d46"));
+    px(ctx, 306, 112, 10, 12, "#d0d6db");
+    [[302, 98], [308, 92], [312, 100]].forEach(([x, y]) => px(ctx, x, y, 6, 14, "#3f7d46"));
   }
 
   // Draw the corporate office high above New York (Advanced tier): a floor-to-ceiling window over a
@@ -407,11 +440,12 @@
     px(ctx, wx + 173, wy + 14, 4, 4, "#101b14");
     for (let i = 0; i < 5; i++) px(ctx, wx + 148, wy + 30 + i * 5, 20 + ((i * 13) % 34), 2, "#3f9d6a");
 
-    // Blast door on the left, which the character walks in through, with a keypad.
-    px(ctx, 12, 44, 50, 82, "#3d4045"); px(ctx, 16, 48, 42, 78, "#6a6e74");
-    px(ctx, 16, 84, 42, 3, "#3d4045"); px(ctx, 36, 48, 2, 78, "#55585c");
-    for (let y = 52; y < 124; y += 8) { px(ctx, 18, y, 2, 2, "#3d4045"); px(ctx, 54, y, 2, 2, "#3d4045"); } // rivets
-    px(ctx, 66, 76, 8, 12, "#1a1b1e"); px(ctx, 68, 78, 4, 3, "#63d49c");
+    // v2.0 (update doc): the lift the character comes down in, with its floor indicator and call button.
+    // The doors are drawn by drawLiftDoors (they open and close).
+    px(ctx, 12, 44, 50, 82, "#3d4045"); px(ctx, 16, 48, 42, 78, "#0d0e10");
+    px(ctx, 16, 48, 42, 4, "#1d1e21");
+    px(ctx, 24, 34, 26, 8, "#111214"); px(ctx, 27, 36, 3, 4, "#ff6b3d"); px(ctx, 32, 36, 3, 4, "#ff6b3d"); px(ctx, 38, 37, 8, 2, "#ff6b3d"); // "B5 ▼"
+    px(ctx, 66, 76, 8, 12, "#1a1b1e"); px(ctx, 68, 78, 4, 3, "#63d49c"); px(ctx, 68, 83, 4, 3, "#3a3e43");
 
     // The player's desk: steel top, monitor, keyboard, a desk phone and a thermos.
     px(ctx, 124, 104, 100, 5, "#6f757c"); px(ctx, 124, 109, 100, 2, "#4a4f55");
@@ -434,6 +468,50 @@
     px(ctx, 300, 60, 14, 66, "#3d4045"); px(ctx, 302, 64, 10, 4, "#c9a227"); // electrical cabinet
   }
 
+  // The lift doors: open is 0 (closed) to 1 (open). Each panel slides into the frame.
+  function drawLiftDoors(ctx, open) {
+    const w = Math.round(21 * (1 - open));
+    if (w <= 0) return;
+    px(ctx, 16, 48, w, 78, "#7a7e85"); px(ctx, 58 - w, 48, w, 78, "#7a7e85");
+    px(ctx, 16 + w - 1, 48, 1, 78, "#55585c"); px(ctx, 58 - w, 48, 1, 78, "#55585c");
+    for (let y = 56; y < 124; y += 14) { px(ctx, 18, y, Math.max(0, w - 4), 1, "#8a8e95"); px(ctx, 60 - w, y, Math.max(0, w - 4), 1, "#8a8e95"); }
+  }
+
+  // The descent before a Master level: a cut-away of the ground with the lift cab going down its shaft,
+  // past the city, soil and rock, to the operations centre. p runs 0..1.
+  function drawDescent(ctx, look, hat, p, t) {
+    const depth = 620;
+    const cabBottom = 70 + ease(p) * (596 - 70);                     // world y of the cab floor
+    const cam = Math.round(Math.max(0, Math.min(depth - 180, cabBottom - 120)));
+    const Y = y => y - cam;
+    px(ctx, 0, 0, 320, 180, "#0c0d10");
+    // Sky and the city on the surface.
+    const sky = ctx.createLinearGradient(0, Y(0), 0, Y(70)); sky.addColorStop(0, "#1c2a52"); sky.addColorStop(1, "#3a4a6e");
+    ctx.fillStyle = sky; ctx.fillRect(0, Y(0), 320, 70);
+    [[10, 30, 30], [44, 18, 22], [70, 40, 26], [190, 24, 30], [224, 36, 20], [250, 12, 28], [282, 34, 30]].forEach(([x, top, w]) => {
+      px(ctx, x, Y(top), w, 70 - top, "#141a26");
+      for (let yy = top + 4; yy < 66; yy += 6) for (let xx = x + 3; xx < x + w - 2; xx += 5) if ((xx + yy) % 3) px(ctx, xx, Y(yy), 2, 2, "#e8c35a");
+    });
+    px(ctx, 120, Y(46), 80, 24, "#2b2f38"); px(ctx, 150, Y(54), 20, 16, "#0d0e10");   // the building over the shaft
+    px(ctx, 0, Y(70), 320, 4, "#3f7d46");                                               // street level
+    // Soil and rock layers, with stones.
+    [[74, 120, "#5a3d27"], [120, 200, "#4a3220"], [200, 300, "#3e3530"], [300, 460, "#34363a"], [460, 600, "#2a2c30"]].forEach(([a, b, c]) => px(ctx, 0, Y(a), 320, b - a, c));
+    for (let i = 0; i < 70; i++) { const x = (i * 53) % 320, y = 80 + (i * 97) % 520; if (x < 130 || x > 190) px(ctx, x, Y(y), 3 + i % 4, 2 + i % 3, "rgba(0,0,0,0.25)"); }
+    // The operations level at the bottom.
+    px(ctx, 0, Y(560), 320, 60, "#55585c"); px(ctx, 0, Y(600), 320, 20, "#2e3033");
+    for (let x = 6; x < 320; x += 30) if (x < 130 || x > 190) px(ctx, x, Y(566), 18, 2, "#e8f0f4");
+    // Shaft, cables and the cab with the character inside.
+    px(ctx, 140, Y(54), 40, depth, "#08090b"); px(ctx, 140, Y(54), 2, depth, "#1d1e21"); px(ctx, 178, Y(54), 2, depth, "#1d1e21");
+    const cy = Math.round(Y(cabBottom)) - 40;
+    px(ctx, 159, Y(54), 1, cy - Y(54), "#6a6e74");
+    px(ctx, 144, cy, 32, 40, "#6a6e74"); px(ctx, 146, cy + 2, 28, 36, "#2a2c30");
+    px(ctx, 146, cy + 2, 28, 2, "#fff2c0");
+    drawWalker(ctx, look, hat, 154, cy + 38, t, { still: true });
+    // Depth read-out.
+    ctx.fillStyle = "#ff6b3d"; ctx.font = "8px monospace"; ctx.textBaseline = "top";
+    ctx.fillText("\u25BC -" + Math.round(p * 60) + " m", 262, 8);
+  }
+
   // One drawing per tier environment.
   const ROOMS = { home: drawHome, office: drawOffice, newyork: drawNewYork, underground: drawUnderground };
 
@@ -454,24 +532,71 @@
   }
 
   // Side view of the character walking, facing right. Same look data as the portraits; only the cap colour changes per tier.
-  function drawWalker(ctx, look, hat, x, footY, t) {
-    const step = Math.floor(t * 8) % 2;
-    const P = (dx, dy, w, h, c) => px(ctx, Math.round(x) + dx, footY - 36 + dy, w, h, c);
+  // opts (v2.0, for the visitor and the ending): still (no stepping), flip (facing left), hood (0..1, hood up
+  // over the head), top / topShade (e.g. the black hoodie), phone (held to the ear). hat null = no cap.
+  function drawWalker(ctx, look, hat, x, footY, t, opts) {
+    opts = opts || {};
+    const step = opts.still ? 0 : Math.floor(t * 8) % 2;
+    const ox = Math.round(x);
+    const P = (dx, dy, w, h, c) => px(ctx, opts.flip ? ox + 12 - dx - w : ox + dx, footY - 36 + dy, w, h, c);
+    const top = opts.top || look.top, shade = opts.topShade || look.topShade;
     P(2, 26, 3, 10 - step, "#2a2b33"); P(6, 26, 3, 9 + step, "#22232a");          // legs
     P(1, 35 - step, 4, 1, "#111"); P(6, 34 + step, 5, 2, "#111");                  // shoes
-    P(1, 12, 9, 15, look.top); P(1, 12, 2, 15, look.topShade);                     // torso
-    P(4 + (step ? 2 : -1), 15, 2, 9, look.topShade); P(4 + (step ? 2 : -1), 24, 2, 2, look.skin); // arm
+    P(1, 12, 9, 15, top); P(1, 12, 2, 15, shade);                                   // torso
+    if (opts.top) { P(5, 13, 1, 6, "#3a3a44"); P(3, 21, 6, 3, shade); }            // hoodie zip and pocket
+    if (opts.phone) { P(7, 7, 2, 8, shade); P(8, 4, 2, 6, "#0b0b0d"); P(8, 9, 2, 1, look.skin); } // arm up, phone at the ear
+    else { P(4 + (step ? 2 : -1), 15, 2, 9, shade); P(4 + (step ? 2 : -1), 24, 2, 2, look.skin); } // arm
     P(4, 10, 3, 2, look.skinShade);                                                 // neck
     P(2, 2, 8, 8, look.skin); P(2, 2, 3, 7, look.hair); P(8, 5, 1, 1, "#111");      // head
     if (look.hairStyle === "bun") P(0, 1, 3, 3, look.hair);
     if (look.hairStyle === "bob") P(1, 3, 3, 8, look.hair);
     if (look.beard) P(6, 7, 4, 3, look.hair);
-    P(2, 0, 8, 3, hat); P(9, 2, 3, 1, hat);                                         // cap
+    if (opts.hood >= 0.5) { P(1, 0, 10, 3, top); P(1, 0, 4, 11, top); P(9, 1, 2, 3, top); P(5, 3, 1, 6, shade); } // hood up
+    else if (opts.top) P(0, 9, 4, 4, shade);                                        // hood down on the back
+    if (hat) { P(2, 0, 8, 3, hat); P(9, 2, 3, 1, hat); }                            // cap
+  }
+
+  // ---- v2.0 room props (update doc) ----
+
+  // A standing coat rack with the black hoodie on it, on the left of every room. state: { hoodie, hat }
+  // (hat is a cap colour when the cap hangs on the rack, in the ending).
+  function drawCoatRack(ctx, x, state) {
+    state = state || { hoodie: true };
+    px(ctx, x + 2, 131, 11, 2, "#2a221b"); px(ctx, x + 4, 129, 7, 2, "#3a2f25");          // base
+    px(ctx, x + 6, 92, 2, 38, "#4a3a2c"); px(ctx, x + 6, 92, 1, 38, "#5e4a38");           // pole
+    px(ctx, x + 3, 93, 8, 1, "#4a3a2c"); px(ctx, x + 2, 92, 2, 2, "#4a3a2c"); px(ctx, x + 10, 92, 2, 2, "#4a3a2c"); // hooks
+    if (state.hat) { px(ctx, x, 89, 6, 3, state.hat); px(ctx, x + 5, 91, 3, 1, state.hat); }
+    if (state.hoodie) {
+      // The black hoodie: hood folded over the hook, body and sleeves hanging down.
+      px(ctx, x + 8, 92, 6, 5, "#16161b"); px(ctx, x + 9, 93, 3, 3, "#0b0b0e");
+      px(ctx, x + 6, 96, 11, 18, "#1b1b21"); px(ctx, x + 6, 96, 2, 18, "#111116");
+      px(ctx, x + 15, 97, 3, 16, "#141419"); px(ctx, x + 11, 97, 1, 9, "#3a3a44");
+      px(ctx, x + 8, 108, 7, 3, "#141419"); px(ctx, x + 6, 113, 11, 1, "#0d0d10");
+    }
+  }
+  const RACK_X = { home: 62, office: 58, newyork: 84, underground: 78 };
+
+  // Extra people in the shared office (Intermediate): plain colours, not one of the four defenders.
+  const NPCS = [
+    { skin: "#c99a7a", skinShade: "#a87a5c", hair: "#3b2a1e", hairStyle: "short", top: "#4f7a5a", topShade: "#3b5e44" },
+    { skin: "#7a4e36", skinShade: "#5e3a26", hair: "#1a1210", hairStyle: "bun", top: "#d9a441", topShade: "#b5852d" },
+    { skin: "#f0cfb4", skinShade: "#d4ae96", hair: "#a8642a", hairStyle: "bob", top: "#6a5acd", topShade: "#5246a8" },
+    { skin: "#e2b48f", skinShade: "#c49370", hair: "#2a2a2a", hairStyle: "fade", top: "#2f7f8f", topShade: "#225e6b" }
+  ];
+
+  // Someone seen from the front behind a monitor (only the head and shoulders show above it).
+  function drawHeadOverMonitor(ctx, look, x, y, t, k) {
+    const bob = Math.floor(t * 1.5 + k) % 4 === 0 ? 1 : 0;
+    px(ctx, x, y + 10 + bob, 14, 6, look.top);
+    px(ctx, x + 3, y + bob, 8, 9, look.skin); px(ctx, x + 3, y + bob, 8, 3, look.hair);
+    if (look.hairStyle === "bob") { px(ctx, x + 2, y + bob, 2, 8, look.hair); px(ctx, x + 10, y + bob, 2, 8, look.hair); }
+    if (look.hairStyle === "bun") px(ctx, x + 5, y - 2 + bob, 4, 3, look.hair);
+    px(ctx, x + 4, y + 5 + bob, 1, 1, "#111"); px(ctx, x + 8, y + 5 + bob, 1, 1, "#111");
   }
 
   // Back view of the character seated at the desk, looking at the monitor.
-  function drawSeated(ctx, look, hat) {
-    const x = 140, y = 78;
+  function drawSeated(ctx, look, hat, ox, oy) {
+    const x = ox || 140, y = oy || 78;
     px(ctx, x - 1, y + 14, 20, 16, look.top); px(ctx, x - 1, y + 14, 3, 16, look.topShade);
     px(ctx, x - 3, y + 24, 24, 22, "#34343e"); px(ctx, x - 3, y + 24, 24, 2, "#4a4a56"); // chair back, in front of the body
     px(ctx, x + 8, y + 46, 3, 14, "#1d1d24"); px(ctx, x, y + 60, 20, 2, "#1d1d24");
@@ -482,7 +607,7 @@
     if (look.hairStyle === "bun") px(ctx, x + 6, y + 6, 6, 5, look.hair);
     if (look.hairStyle === "fade" || look.hairStyle === "short") px(ctx, x + 4, y + 8, 10, 3, look.skinShade);
     if (look.headphones) { px(ctx, x + 2, y + 4, 2, 5, "#2b2f36"); px(ctx, x + 14, y + 4, 2, 5, "#2b2f36"); px(ctx, x + 3, y, 12, 2, "#2b2f36"); }
-    px(ctx, x + 3, y - 1, 12, 5, hat); px(ctx, x + 8, y - 2, 2, 1, hat); // cap from behind
+    if (hat) { px(ctx, x + 3, y - 1, 12, 5, hat); px(ctx, x + 8, y - 2, 2, 1, hat); } // cap from behind
   }
 
   // Light sources drawn after the overlay, so lamps and the screen glow at night.
@@ -506,33 +631,79 @@
 
   // Run the level's room scene on a canvas. Returns controls for the level screen:
   // sit() skips the walk, alarm() starts the warning, zoom() resolves when the camera reaches the monitor.
+  // v2.0: in the underground (Master) the character first rides the lift down ("descend"), the doors
+  // open ("doors") and they walk out. visitor()/visitorLeave() glitch a teammate in and out (Level 6).
+  // cfg.finale runs the ending instead: the scene starts seated and is driven by set()/walk()/tween().
   function room(canvas, cfg) {
     canvas.width = 320; canvas.height = 180;
     const ctx = canvas.getContext("2d");
     const buf = document.createElement("canvas"); buf.width = 320; buf.height = 180;
     const b = buf.getContext("2d");
     const L = LIGHTING[cfg.lighting] || LIGHTING.day;
-    const drawRoom = ROOMS[cfg.environment] || drawHome;
+    const env = ROOMS[cfg.environment] ? cfg.environment : "home";
+    const drawRoom = ROOMS[env];
+    const lift = env === "underground";
     const still = UR.reducedMotion();
-    let phase = "arrive", phaseAt = performance.now(), raf = 0, alive = true, zoomDone = null;
+    let phase = cfg.finale ? "finale" : lift && !still ? "descend" : "arrive";
+    let phaseAt = performance.now(), raf = 0, alive = true, zoomDone = null;
     const start = performance.now();
+    let visitor = null; // { look, hat, at, leaving, done }
+    // Ending state (cfg.finale): pose, position and what the character wears.
+    const F = { pose: "seated", x: 140, flip: true, hat: cfg.hat, hood: 0, hoodie: false, phone: false, screen: "on",
+                rack: { hoodie: true, hat: null }, liftOpen: 0, fade: 0, crt: 0, capFly: null, hidden: false };
+    const tweens = [];
+
+    // Draw a figure through a glitch: horizontal slices shifted at random, tinted red and cyan.
+    const gbuf = document.createElement("canvas"); gbuf.width = 320; gbuf.height = 180;
+    const g = gbuf.getContext("2d");
+    function glitchDraw(drawFn, amount) {
+      g.clearRect(0, 0, 320, 180);
+      drawFn(g);
+      if (amount <= 0) { b.drawImage(gbuf, 0, 0); return; }
+      for (let y = 90; y < 150; y += 3) {
+        const off = Math.random() < amount ? Math.round((Math.random() - 0.5) * 16 * amount) : 0;
+        if (Math.random() < amount * 0.5) continue; // missing slices
+        b.drawImage(gbuf, 0, y, 320, 3, off, y, 320, 3);
+      }
+      b.save(); b.globalCompositeOperation = "lighter"; b.globalAlpha = 0.5 * amount;
+      b.drawImage(gbuf, -2, 0); b.restore();
+    }
 
     function frame(now) {
       if (!alive) return;
       const t = (now - start) / 1000, pt = (now - phaseAt) / 1000;
+      if (phase === "descend" && pt >= 2.6) { setPhase("doors"); UR.audio.ding(); }
+      if (phase === "doors" && pt >= 0.8) setPhase("arrive");
       if (phase === "arrive" && (still || pt >= 2.8)) setPhase("seated");
-      const screen = phase === "alarm" || phase === "zoom" ? "alarm" : phase === "work" ? "on" : phase === "seated" ? "on" : "off";
+      runTweens(now);
+      const screen = cfg.finale ? F.screen : phase === "alarm" || phase === "zoom" ? "alarm" : phase === "work" || phase === "seated" ? "on" : "off";
 
-      drawRoom(b, L, t);
-      drawScreen(b, screen, t);
-      if (phase === "arrive") drawWalker(b, cfg.look, cfg.hat, 34 + Math.min(1, pt / 2.6) * 98, 140, t);
-      else drawSeated(b, cfg.look, cfg.hat);
-      if (L.overlay) { b.fillStyle = L.overlay; b.fillRect(0, 0, 320, 180); }
-      drawScreen(b, screen, t); // the screen itself is never darkened by the overlay
-      drawGlow(b, L, screen);
-      if (phase === "alarm" || phase === "zoom") {
-        const a = still ? 0.18 : 0.12 + 0.18 * (0.5 + 0.5 * Math.sin(t * 12));
-        b.fillStyle = "rgba(255,40,30," + a.toFixed(3) + ")"; b.fillRect(0, 0, 320, 180);
+      if (phase === "descend") {
+        drawDescent(b, cfg.look, cfg.hat, Math.min(1, pt / 2.6), t);
+      } else {
+        drawRoom(b, L, t);
+        drawCoatRack(b, RACK_X[env], cfg.finale ? F.rack : { hoodie: true });
+        drawScreen(b, screen, t);
+        if (screen === "off" && F.crt > 0) { const w = Math.round(MONITOR.w * F.crt); px(b, MONITOR.x + (MONITOR.w - w) / 2, MONITOR.y + MONITOR.h / 2, w, 1, "#dff6ff"); }
+        const liftOpen = phase === "doors" ? Math.min(1, pt / 0.6) : phase === "arrive" && lift ? 1 : cfg.finale ? F.liftOpen : 0;
+        if (lift && !(phase === "doors" || phase === "arrive" || cfg.finale)) drawLiftDoors(b, 0);
+        if (cfg.finale) drawFinaleFigure(t);
+        else if (phase === "doors") drawWalker(b, cfg.look, cfg.hat, 31, 126, t, { still: true });
+        else if (phase === "arrive") {
+          const x = (lift ? 31 : 34) + Math.min(1, pt / 2.6) * (lift ? 101 : 98);
+          drawWalker(b, cfg.look, cfg.hat, x, lift && x < 50 ? 126 + Math.round((x - 31) / 19 * 14) : 140, t);
+        } else drawSeated(b, cfg.look, cfg.hat);
+        // Lift doors go in front of anyone still inside the cab.
+        if (lift && (phase === "doors" || cfg.finale)) drawLiftDoors(b, liftOpen);
+        if (visitor) drawVisitor(now);
+        if (L.overlay) { b.fillStyle = L.overlay; b.fillRect(0, 0, 320, 180); }
+        drawScreen(b, screen, t); // the screen itself is never darkened by the overlay
+        drawGlow(b, L, screen);
+        if (phase === "alarm" || phase === "zoom") {
+          const a = still ? 0.18 : 0.12 + 0.18 * (0.5 + 0.5 * Math.sin(t * 12));
+          b.fillStyle = "rgba(255,40,30," + a.toFixed(3) + ")"; b.fillRect(0, 0, 320, 180);
+        }
+        if (F.fade > 0) { b.fillStyle = "rgba(0,0,0," + F.fade.toFixed(3) + ")"; b.fillRect(0, 0, 320, 180); }
       }
 
       ctx.imageSmoothingEnabled = false;
@@ -547,20 +718,98 @@
         ctx.drawImage(buf, shake, 0);
       }
       for (let y = 0; y < 180; y += 3) { ctx.fillStyle = "rgba(0,0,0,0.08)"; ctx.fillRect(0, y, 320, 1); }
-      if (!still || phase === "zoom" && zoomDone) raf = requestAnimationFrame(frame);
+      if (!still || phase === "zoom" && zoomDone || tweens.length || visitor) raf = requestAnimationFrame(frame);
+    }
+
+    // The visiting teammate stands near the door, facing the desk, glitching in and out.
+    function drawVisitor(now) {
+      const v = visitor;
+      const age = (now - v.at) / 1000;
+      let amount = still ? 0 : Math.max(0, 1 - age / 0.6);
+      if (v.leaving) {
+        const la = (now - v.leaving) / 1000;
+        amount = Math.min(1, la / 0.5);
+        if (la >= 0.6 || still) { const done = v.done; visitor = null; if (done) done(); return; }
+      }
+      glitchDraw(c => drawWalker(c, v.look, v.hat, 92, 140, 0, { still: true }), amount);
+    }
+
+    // The ending's figure: seated at the desk, or standing and walking with what they wear right now.
+    function drawFinaleFigure(t) {
+      if (F.hidden) return;
+      const look = cfg.look;
+      const wear = F.hoodie ? { top: "#1b1b21", topShade: "#111116" } : {};
+      const hatColor = F.hat ? cfg.hat : null;
+      if (F.pose === "seated") {
+        drawSeated(b, F.hoodie ? Object.assign({}, look, { top: "#1b1b21", topShade: "#111116" }) : look, hatColor);
+      } else {
+        const foot = F.x < 50 ? 126 + Math.round(Math.max(0, F.x - 31) / 19 * 14) : 140;
+        drawWalker(b, look, hatColor, F.x, foot, F.walking ? t : 0, Object.assign({ still: !F.walking, flip: F.flip, hood: F.hood, phone: F.phone }, wear));
+      }
+      if (F.capFly) { const c = F.capFly; px(b, Math.round(c.x), Math.round(c.y), 7, 3, cfg.hat); px(b, Math.round(c.x) + 6, Math.round(c.y) + 2, 2, 1, cfg.hat); }
+    }
+
+    // Tween one numeric field of F (or of an object) over ms milliseconds. Resolves when done.
+    function tween(obj, key, to, ms) {
+      return new Promise(resolve => {
+        if (still || !ms) { obj[key] = to; frame(performance.now()); return resolve(); }
+        tweens.push({ obj, key, from: obj[key], to, at: performance.now(), ms, resolve });
+        cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
+      });
+    }
+    function runTweens(now) {
+      for (let i = tweens.length - 1; i >= 0; i--) {
+        const tw = tweens[i];
+        const p = Math.min(1, (now - tw.at) / tw.ms);
+        tw.obj[tw.key] = tw.from + (tw.to - tw.from) * p;
+        if (p >= 1) { tweens.splice(i, 1); tw.resolve(); }
+      }
     }
 
     function setPhase(p) { phase = p; phaseAt = performance.now(); if (still) frame(performance.now()); }
 
     frame(performance.now());
     return {
-      sit() { if (phase === "arrive") setPhase("seated"); },
+      sit() { if (phase === "arrive" || phase === "descend" || phase === "doors") setPhase("seated"); },
       work() { setPhase("work"); },
       alarm() { setPhase("alarm"); },
       zoom() { return new Promise(resolve => { zoomDone = resolve; setPhase("zoom"); }); },
-      stop() { alive = false; cancelAnimationFrame(raf); }
+      visitor(look, hat) { visitor = { look, hat, at: performance.now() }; cancelAnimationFrame(raf); raf = requestAnimationFrame(frame); },
+      visitorLeave() {
+        return new Promise(resolve => {
+          if (!visitor) return resolve();
+          visitor.leaving = performance.now(); visitor.done = resolve;
+          cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
+          setTimeout(() => { visitor = null; resolve(); }, 900); // safety: never hang the intro
+        });
+      },
+      // Ending controls.
+      state: F,
+      set(props) { Object.assign(F, props); if (still) frame(performance.now()); },
+      tween,
+      walk(toX, ms) { F.walking = true; F.flip = toX < F.x; return tween(F, "x", toX, ms).then(() => { F.walking = false; frame(performance.now()); }); },
+      rackX: RACK_X[env],
+      stop() { alive = false; cancelAnimationFrame(raf); tweens.splice(0).forEach(tw => tw.resolve()); }
     };
   }
 
-  UR.scene = { drawBust, portrait, playScene, room, HATS, LIGHTING };
+  // v2.0: the hooded figure on the newspaper page ("What actually happened…"), in the event's colour:
+  // black, grey or red. A pixel portrait from the front, face in shadow, lit by a laptop.
+  function hacker(canvas, color) {
+    const C = { black: ["#1b1b21", "#0d0d11", "#2c2c35"], gray: ["#6b6f75", "#4a4e54", "#868a90"], red: ["#9b1c1c", "#651010", "#c0392b"] }[color] || ["#1b1b21", "#0d0d11", "#2c2c35"];
+    canvas.width = 48; canvas.height = 48;
+    const ctx = canvas.getContext("2d");
+    px(ctx, 0, 0, 48, 48, "#d8d0bd");
+    for (let y = 0; y < 48; y += 2) for (let x = (y / 2) % 2; x < 48; x += 2) px(ctx, x, y, 1, 1, "rgba(35,29,21,0.12)"); // halftone
+    px(ctx, 8, 30, 32, 18, C[0]); px(ctx, 8, 30, 4, 18, C[1]); px(ctx, 36, 30, 4, 18, C[1]); // shoulders
+    px(ctx, 13, 6, 22, 26, C[0]); px(ctx, 11, 10, 26, 20, C[0]); px(ctx, 14, 5, 20, 3, C[2]);  // hood
+    px(ctx, 16, 12, 16, 17, "#050506");                                                          // shadowed face
+    px(ctx, 19, 19, 3, 1, "#e8f0f4"); px(ctx, 26, 19, 3, 1, "#e8f0f4");                          // eyes catching light
+    px(ctx, 22, 30, 1, 8, C[1]); px(ctx, 25, 30, 1, 8, C[1]);                                    // drawstrings
+    px(ctx, 10, 40, 28, 8, "#2b2f36"); px(ctx, 12, 41, 24, 1, "#8fd3ff");                        // laptop
+    const gl = ctx.createLinearGradient(0, 40, 0, 20); gl.addColorStop(0, "rgba(143,211,255,0.35)"); gl.addColorStop(1, "rgba(143,211,255,0)");
+    ctx.fillStyle = gl; ctx.fillRect(14, 20, 20, 20);
+  }
+
+  UR.scene = { drawBust, portrait, playScene, room, hacker, HATS, LIGHTING };
 })(window.UR = window.UR || {});

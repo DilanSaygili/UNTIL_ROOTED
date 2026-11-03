@@ -44,8 +44,10 @@ Değişiklikten sonra her zaman `node tools/validate.js` çalıştır.
 - `lighting`: `day`, `twilight`, `night`; yeraltında `warm`, `dusk`, `dark`.
 - `options`: her kararda kaç şık olacağı. Doğrulayıcı bunu kontrol eder. Karaktere özel gizli şıklar bu sayıya dahil değildir.
 - `real`: gerçek olaydan esinlenen seviyede `{ "dates": "August–December 2022", "place": "..." }`. Introda "Inspired by events of …" yazar. Kurgusal seviyede `null`.
-- `whatActuallyHappened`: gerçek olay seviyesinde `{ "title": "What actually happened…", "paragraphs": ["..."] }`. Gerçek isimler **sadece** burada geçer. Kaynakları `docs/sources-XX.md` dosyasına yaz.
-- `introChoice` (isteğe bağlı): vardiyadan önceki gizli seçim. `{ "at": "Fri 17:30", "prompt": "...", "choices": [{ "label", "short", "note", "effects" }] }`.
+- `whatActuallyHappened`: gerçek olay seviyesinde `{ "title": "What actually happened…", "headline": "...", "hacker": "black", "paragraphs": ["..."] }`. Gerçek isimler **sadece** burada geçer. Kaynakları `docs/sources-XX.md` dosyasına yaz. (v2.0) Bu ekran gazete ön sayfası olarak açılır: `headline` gazetenin manşetidir; `hacker` sağ üstteki kapüşonlu figürün rengidir: `"black"`, `"gray"` veya `"red"` (olaya uygun olanı seç).
+- `introChoice` (isteğe bağlı): vardiyadan önceki gizli seçim. `{ "at": "Fri 17:30", "prompt": "...", "choices": [{ "label", "short", "note", "wise", "effects" }] }`. (v2.0) `wise: true/false` yazılırsa seçimden sonra başka bir takım arkadaşı glitch efektiyle gelir ve seçimin doğru mu yanlış mı olduğunu söyler.
+- (v2.0) Şıklar ekranda her seferinde karışık sırayla, A, B, C… diye harflenerek gösterilir; "None of these" hep en sonda kalır. Dosyadaki `key` değerleri değişmez, `docs/paths-*.md` dosyalarındaki harfler dosyadaki anahtarlardır, ekrandaki harfler değil.
+- (v2.0) Sıralama bulmacası (`order`): maddeler ekranda karışık sırayla gelir. `"hideNeeds": true` yazılırsa "Needs:" satırları gösterilmez (cevabı ele veriyorsa). "The order that works" listesi oyun sırasında gösterilmez; rapor ekranında, seviye geçildiyse gösterilir.
 - `clients` (isteğe bağlı): müşteri göstergeleri, `[{ "id": "dental", "name": "Dental clinic", "start": 20 }]`.
 
 ## 2. Düğümler (nodes)

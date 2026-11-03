@@ -10,16 +10,19 @@
     const saved = UR.save.data.started;
     const canvas = h("canvas", { class: "title-art", width: "168", height: "44", "aria-hidden": "true" });
 
+    // v2.0: a small click on every title-screen button (and only here).
+    const clicky = fn => () => { UR.audio.click(); fn(); };
+
     const buttons = h("div", { class: "title-actions" },
-      saved ? h("button", { class: "btn primary", id: "continue-game", onclick: () => UR.go.map() },
+      saved ? h("button", { class: "btn primary", id: "continue-game", onclick: clicky(() => UR.go.map()) },
         "Continue as " + UR.data.characters[UR.save.data.character].first) : null,
-      h("button", { class: "btn" + (saved ? "" : " primary"), id: "new-game", onclick: () => saved ? confirmNew() : startNew() }, "New game"));
+      h("button", { class: "btn" + (saved ? "" : " primary"), id: "new-game", onclick: clicky(() => saved ? confirmNew() : startNew()) }, "New game"));
 
     const confirmBox = h("div", { class: "confirm", hidden: "" },
       h("p", {}, "Start over? Your titles, unlocked levels and tip tokens will be erased."),
       h("div", { class: "title-actions" },
-        h("button", { class: "btn primary", id: "confirm-new", onclick: startNew }, "Erase and start over"),
-        h("button", { class: "btn", id: "cancel-new", onclick: () => { confirmBox.hidden = true; buttons.hidden = false; root.querySelector("#new-game").focus(); } }, "Keep my progress")));
+        h("button", { class: "btn primary", id: "confirm-new", onclick: clicky(startNew) }, "Erase and start over"),
+        h("button", { class: "btn", id: "cancel-new", onclick: clicky(() => { confirmBox.hidden = true; buttons.hidden = false; root.querySelector("#new-game").focus(); }) }, "Keep my progress")));
 
     function confirmNew() {
       buttons.hidden = true;
@@ -27,15 +30,16 @@
       root.querySelector("#cancel-new").focus();
     }
 
-    root.replaceChildren(h("section", { class: "title-screen" },
+    // v2.0: the title arrives with a glitch (CSS .glitch-in; skipped with reduced motion).
+    root.replaceChildren(h("section", { class: "title-screen glitch-in" },
       h("p", { class: "eyebrow" }, "An incident-response game"),
       h("h1", { class: "logo", "aria-label": "Until Rooted" },
-        h("span", { class: "logo-until" }, "UNTIL"), h("span", { class: "logo-rooted" }, "ROOTED")),
+        h("span", { class: "logo-until" }, "UNTIL"), h("span", { class: "logo-rooted", "data-text": "ROOTED" }, "ROOTED")),
       h("p", { class: "countdown", "aria-hidden": "true" }, "T-minus ", h("span", { id: "t-minus" }, "00:20:00"), " until the attacker has root"),
       canvas,
       h("p", { class: "title-blurb" }, "Twelve incidents. Some invented, some inspired by real attacks. Every decision follows real security practice, and some choices only bite you three steps later."),
       buttons, confirmBox,
-      h("p", { class: "license" }, "Until Rooted © 2026 Dilan · Code MIT · Content CC BY-NC-SA 4.0")
+      h("p", { class: "license" }, "Until Rooted v" + UR.VERSION + " © 2026 Dilan · Code MIT · Content CC BY-NC-SA 4.0")
     ));
     drawTeam(canvas);
     runCountdown(root.querySelector("#t-minus"));

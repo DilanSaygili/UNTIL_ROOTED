@@ -4,19 +4,57 @@
   "use strict";
   const E = () => UR.engine;
 
-  // Build the report, record the result in the save, and offer Retry / next step.
+  // Record the result in the save. v2.0 (update doc): a newly earned title first gets its own
+  // "New title earned" screen with a small celebration; then the report follows.
   function show(root, level, state) {
-    const h = UR.h;
+    UR.audio.stopMusic();
     const pct = E().percent(state, level);
-    const end = E().ending(level, state);
+    const before = UR.save.data.title;
+    // Only the first pass of a level earns its title; replays go straight to the report.
+    const firstPass = !level.demo && (UR.save.data.best[level.id] || 0) < UR.data.tiers.passPercent;
     // The training drill never touches the save.
     const result = level.demo ? { demo: true } : UR.save.recordResult(level.level, level.id, pct, UR.data.tiers);
+    result.firstPass = firstPass;
+    if (result.newTitle && firstPass) return celebrate(root, level, before, result.newTitle, () => render(root, level, state, pct, result));
+    render(root, level, state, pct, result);
+  }
+
+  // The "New title earned" screen: the old title crossed out, the new one large, confetti and a fanfare.
+  function celebrate(root, level, oldTitle, title, next) {
+    const h = UR.h;
+    const titles = UR.data.tiers.titles;
+    const burst = h("div", { class: "confetti", "aria-hidden": "true" });
+    const colors = ["#f0b23e", "#63d49c", "#b99cff", "#ff5c4d", "#6fb3ff", "#ffffff"];
+    if (!UR.reducedMotion()) for (let i = 0; i < 42; i++) {
+      const a = (i / 42) * Math.PI * 2, d = 120 + Math.random() * 180;
+      burst.append(h("span", { style: "--dx:" + Math.round(Math.cos(a) * d) + "px;--dy:" + Math.round(Math.sin(a) * d - 60) + "px;--r:" +
+        Math.round(Math.random() * 720 - 360) + "deg;--d:" + (Math.random() * 0.25).toFixed(2) + "s;background:" + colors[i % colors.length] }));
+    }
+    root.replaceChildren(h("section", { class: "title-earned" },
+      burst,
+      h("p", { class: "eyebrow" }, levelName(level) + " · " + level.title + " · passed"),
+      h("p", { class: "te-new" }, "New title earned"),
+      h("h1", { class: "te-title" }, title),
+      oldTitle !== title ? h("p", { class: "te-from" }, h("s", {}, oldTitle), " \u2192 ", h("strong", {}, title)) : null,
+      h("p", { class: "te-rank" }, "Rank " + (titles.indexOf(title) + 1) + " of " + titles.length),
+      h("button", { class: "btn primary", id: "see-report", onclick: next }, "See the report")));
+    window.scrollTo(0, 0);
+    UR.audio.fanfare();
+    root.querySelector("#see-report").focus({ preventScroll: true });
+  }
+
+  // Build the report and offer Retry / next step.
+  function render(root, level, state, pct, result) {
+    const h = UR.h;
+    const end = E().ending(level, state);
     UR.audio.sting(end.tone);
 
     const rewards = [];
     if (result.demo) rewards.push(h("li", {}, "Training drill: nothing was saved. Consult and \u201CNone of these\u201D work like this from Level 4 and Level 10."));
     else if (!result.passed) rewards.push(h("li", { class: "bad" }, "Below " + UR.data.tiers.passPercent + "%: no title this time, and the next level stays locked."));
-    if (result.passed && !result.demo) rewards.push(h("li", { class: "good" }, "Passed. Title: " + UR.save.data.title + (result.newTitle ? " (earned now)" : "")));
+    // v2.0: the title stands out as a badge instead of looking like any other line.
+    if (result.passed && !result.demo) rewards.push(h("li", { class: "good title-line" }, "Passed. Title: ",
+      h("span", { class: "title-badge" + (result.newTitle && result.firstPass ? " new" : "") }, UR.save.data.title), result.newTitle && result.firstPass ? " earned now" : ""));
     // Passing Level 12 opens the bonus level; passing the bonus opens nothing more.
     const bonus = UR.data.index.bonus;
     if (result.unlocked && bonus && result.unlocked === bonus.level) {
@@ -52,6 +90,20 @@
       return "Keep at least " + E().evidenceDecay(level).bonusPer + " evidence for a bonus point.";
     }
     const wah = level.whatActuallyHappened;
+    // v2.0 (update doc): after the bonus level is passed, the way on is the report, then "What actually
+    // happened", then "End" (the closing scene) instead of the level map.
+    const finale = !!(result.passed && isBonus(level) && wah);
+
+    // Order puzzles (Level 11, bonus): the order that works is shown here, and only once the level is
+    // passed, so a player who has to try again does not get the answer (update doc, v2.0).
+    function orderSection() {
+      if (!state.orders || !state.orders.length) return null;
+      return state.orders.map(o => section("The order that works · " + o.title,
+        result.passed || result.demo
+          ? h("ol", { class: "order-list" }, ...o.correct.map(it => h("li", {},
+              h("strong", {}, it.label + (it.placed ? " \u2717 (you placed " + it.placed + ")" : " \u2713") + " "), it.why)))
+          : h("p", {}, "Pass the level to see the order that works.")));
+    }
 
     const report = h("section", { class: "report" },
       h("p", { class: "eyebrow" }, "Incident report · " + levelName(level) + " · " + level.title),
@@ -77,6 +129,7 @@
             : h("strong", { class: "good" }, "That advice was sound."))) : null,
 
       evidenceSection(),
+      orderSection(),
 
       // Level 6: how much of each client's business was running when the night ended.
       level.clients ? section("Clients",
@@ -94,10 +147,10 @@
       section("Relevant standards", h("ul", {}, ...(level.standards || []).map(s => h("li", {}, s)))),
 
       h("div", { class: "actions" },
-        wah ? h("button", { class: "btn primary", id: "wah", onclick: () => story(root, level, report) }, "What actually happened\u2026") : null,
-        h("button", { class: "btn" + ((result.passed || result.demo) && !wah ? " primary" : ""), id: "to-map", onclick: () => UR.go.map() }, "Level map"),
+        wah ? h("button", { class: "btn primary", id: "wah", onclick: () => story(root, level, report, finale) }, "What actually happened\u2026") : null,
+        finale ? null : h("button", { class: "btn" + ((result.passed || result.demo) && !wah ? " primary" : ""), id: "to-map", onclick: () => UR.go.map() }, "Level map"),
         h("button", { class: "btn" + (result.passed || result.demo ? "" : " primary"), id: "retry", onclick: () => UR.go.level(level.id) }, result.passed || result.demo ? "Play again" : "Retry")),
-      h("p", { class: "license" }, "Until Rooted © 2026 Dilan · Code MIT · Content CC BY-NC-SA 4.0")
+      h("p", { class: "license" }, "Until Rooted v" + UR.VERSION + " © 2026 Dilan · Code MIT · Content CC BY-NC-SA 4.0")
     );
     root.replaceChildren(report);
     root.scrollTop = 0;
@@ -106,53 +159,51 @@
   }
 
   // "What actually happened…" (real-event levels only): the real story with real names, the only
-  // place they appear. Paragraphs appear one at a time, like opening a case file; "Show all" skips ahead.
-  // "Back to report" puts the same report back, so the result is not recorded twice.
-  function story(root, level, report) {
+  // place they appear. v2.0 (update doc): it arrives like a flashback (white flash, sepia, the page
+  // spinning in) as a newspaper front page, with a hooded figure in the corner whose colour suits the
+  // event (black, grey or red, "hacker" in the level file). "Back to report" puts the same report back,
+  // so the result is not recorded twice. After the bonus level is passed, "End" replaces "Level map".
+  function story(root, level, report, finale) {
     const h = UR.h;
     const w = level.whatActuallyHappened;
-    let shown = 0;
-    const text = h("div", { class: "story-text", "aria-live": "polite" });
-    const nextBtn = h("button", { class: "btn primary", id: "story-next", onclick: reveal }, "Next");
-    const allBtn = h("button", { class: "btn ghost", id: "story-all", onclick: () => { while (shown < w.paragraphs.length) reveal(); } }, "Show all");
     const leave = to => { UR.audio.stopMystery(); to(); };
-    const end = h("div", { class: "story-end", hidden: "" },
-      h("h2", {}, "Sources"),
-      h("ul", { class: "sources" }, ...(w.sources || []).map(src =>
-        h("li", {}, h("a", { href: src.url, target: "_blank", rel: "noopener noreferrer" }, src.label)))),
-      h("div", { class: "actions" },
-        h("button", { class: "btn primary", id: "story-back", onclick: () => leave(() => {
-          root.replaceChildren(report);
-          window.scrollTo(0, 0);
-          report.querySelector("#to-map").focus({ preventScroll: true });
-        }) }, "Back to report"),
-        h("button", { class: "btn", id: "story-map", onclick: () => leave(() => UR.go.map()) }, "Level map")));
+    const hacker = h("canvas", { class: "np-hacker hacker-" + (w.hacker || "black"), "aria-hidden": "true" });
+    UR.scene.hacker(hacker, w.hacker || "black");
+    const backBtn = h("button", { class: "btn", id: "story-back", onclick: () => leave(() => {
+      root.replaceChildren(report);
+      window.scrollTo(0, 0);
+      (report.querySelector("#to-map") || report.querySelector("#wah")).focus({ preventScroll: true });
+    }) }, "Back to report");
+    const onward = finale
+      ? h("button", { class: "btn primary", id: "story-end", onclick: () => leave(() => UR.screens.ending.show(root)) }, "End")
+      : h("button", { class: "btn primary", id: "story-map", onclick: () => leave(() => UR.go.map()) }, "Level map");
 
-    // Show the next paragraph; after the last one, show the sources and the way back.
-    function reveal() {
-      text.append(h("p", { class: "story-p" }, w.paragraphs[shown++]));
-      if (shown < w.paragraphs.length) return;
-      nextBtn.hidden = allBtn.hidden = true;
-      end.hidden = false;
-      end.querySelector("#story-back").focus({ preventScroll: true });
-    }
+    const page = h("article", { class: "story newspaper" },
+      h("header", { class: "np-head" },
+        hacker,
+        h("p", { class: "np-mast" }, "The Daily Ledger"),
+        h("p", { class: "np-strap" }, h("span", {}, "Special edition"), h("span", {}, level.real.dates), h("span", {}, "Price: one lesson"))),
+      h("p", { class: "eyebrow" }, "What actually happened\u2026 · " + levelName(level) + " · " + level.title),
+      h("h1", { class: "np-headline", tabindex: "-1" }, w.headline || w.title || "What actually happened\u2026"),
+      h("div", { class: "story-text np-columns" }, ...w.paragraphs.map((p, i) => h("p", { class: "story-p", style: "--i:" + i }, p))),
+      h("div", { class: "story-end" },
+        h("h2", {}, "Sources"),
+        h("ul", { class: "sources" }, ...(w.sources || []).map(src =>
+          h("li", {}, h("a", { href: src.url, target: "_blank", rel: "noopener noreferrer" }, src.label)))),
+        h("div", { class: "actions" }, onward, backBtn)));
 
-    root.replaceChildren(h("section", { class: "story" },
-      h("p", { class: "eyebrow" }, levelName(level) + " · " + level.title + " · Inspired by events of " + level.real.dates),
-      h("h1", {}, w.title || "What actually happened\u2026"),
-      text,
-      h("div", { class: "actions story-actions" }, nextBtn, allBtn),
-      end));
+    root.replaceChildren(h("section", { class: "flashback" }, h("div", { class: "fb-flash", "aria-hidden": "true" }), page));
     window.scrollTo(0, 0);
     UR.audio.startMystery();
-    reveal();
-    nextBtn.focus({ preventScroll: true });
+    root.querySelector(".np-headline").focus({ preventScroll: true });
   }
 
   function section(title, body) {
     const h = UR.h;
     return h("section", { class: "r-section" }, h("h2", {}, title), body);
   }
+
+  function isBonus(level) { const b = UR.data.index.bonus; return !!(b && b.id === level.id); }
 
   // The bonus level is numbered 13 internally but is called "Bonus level" on screen.
   function levelName(level) {

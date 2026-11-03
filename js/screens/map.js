@@ -47,9 +47,13 @@
       h("span", { class: "lv-state" }, h("span", { class: "lv-badge" }, badge(st.kind)), " ", stateText(entry, st))
     ];
     const cls = "lv-card " + st.kind;
+    // v2.0 (update doc): each card's frame takes its tier's hat colour instead of green for every level.
+    // The bonus is played in the purple Master hat. State is still written in words on the card.
+    const tierHat = (UR.data.tiers.tiers[entry.tier] || UR.data.tiers.tiers.master).hat;
+    const style = "--hat:" + UR.scene.HATS[tierHat];
     return playable
-      ? h("button", { class: cls, id: "play-" + entry.id, onclick: () => UR.go.level(entry.id) }, ...inner)
-      : h("div", { class: cls, "aria-disabled": "true" }, ...inner);
+      ? h("button", { class: cls + " hat-" + tierHat, style, id: "play-" + entry.id, onclick: () => UR.go.level(entry.id) }, ...inner)
+      : h("div", { class: cls + " hat-" + tierHat, style, "aria-disabled": "true" }, ...inner);
   }
 
   function badge(kind) {

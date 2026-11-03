@@ -1124,6 +1124,8 @@
     "MITRE ATT&CK: T1195.002 Compromise Software Supply Chain, T1210 Exploitation of Remote Services, T1003 OS Credential Dumping, T1485 Data Destruction"
   ],
   "whatActuallyHappened": {
+    "headline": "Worm wipes a shipping giant; the last clean copy turns up in Ghana",
+    "hacker": "red",
     "title": "What actually happened…",
     "paragraphs": [
       "On 27 June 2017, a software update for M.E.Doc, accounting software used by a large share of Ukrainian businesses, carried malicious code. Researchers at ESET later found a backdoor on M.E.Doc's update service weeks earlier. The malware, soon called NotPetya, spread from machine to machine on its own, using the EternalBlue exploit against unpatched Windows systems (Microsoft had released a fix in March 2017) and passwords pulled from memory with techniques taken from the Mimikatz tool.",

@@ -923,6 +923,8 @@
     "MITRE ATT&CK: T1199 Trusted Relationship, T1078 Valid Accounts, T1566 Phishing (how the vendor's credentials were first stolen in the real case)"
   ],
   "whatActuallyHappened": {
+    "headline": "40 million cards stolen after a retailer's alarms went unanswered",
+    "hacker": "gray",
     "title": "What actually happened…",
     "paragraphs": [
       "In late 2013, attackers broke into the US retailer Target. The way in was a vendor: Fazio Mechanical Services, a refrigeration and HVAC contractor from Pennsylvania. According to the US Senate Commerce Committee's staff report, the attackers stole Fazio's network credentials, reportedly through malware-infected email, at least two months before the breach began.",
