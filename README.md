@@ -5,7 +5,7 @@ You are the incident responder. The alarm goes off, the attacker is already insi
 has delayed consequences. Twelve levels plus a bonus, from a phished mailbox at a small freight company to a power
 grid going dark on a winter night.
 
-**▶ Play:** https://YOUR-USERNAME.github.io/until-rooted/
+**▶ Play:** https://DilanSaygili.github.io/UNTIL_ROOTED/
 
 ![Title screen](docs/screenshot-title.png)
 
